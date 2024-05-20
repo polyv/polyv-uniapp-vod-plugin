@@ -1,0 +1,272 @@
+<template>
+	<div>
+		<!-- <dc-testmap ref='mycomponent' style="width:750rpx;height:300px" showTraffic="true" @mapLoaded="onMapLoaded"></dc-testmap> -->
+		<head class="title" :title="title"></head>
+		<view class="vod-player">
+			<plv-player
+				class="plv-vod-player"
+				ref="vod"
+				seekType=0
+				autoPlay=true
+				disableScreenCAP=false
+				rememberLastPosition=false
+				@onPlayStatus="onPlayStatus"
+				@onPlayError="onPlayError"
+				@positionChange="positionChange" >
+			</plv-player>
+			<button type="primary" @click="fullScreen()" style="width:180px; height:44px; position:absolute; bottom:0px; left:0px;">全屏</button>
+			<button type="primary" @click="cancelFullScreen()" style="width:180px; height:44px; position:absolute; bottom:0px; right:0px;">取消全屏</button>
+			<button type="primary" @click="snapshot()" style="width:120px; height:44px; position:absolute; top:0px; right:0px;">截图</button>
+		</view>
+		<view>
+			<text>{{progress}}</text>
+			<view>
+				<input class="uni-input" style="min-height: 35px; height: 35px; border: 1px solid #cccccc;font-size: 14px;" :value="videoVid"
+				 @input="onVidInput" placeholder="请输入视频vid" />
+				<button type="primary" @click="setVid()">setVid</button>
+			</view>
+			<button type="primary" @click="setURL()">setURL</button>
+			<button type="primary" @click="showMarquee()">显示跑马灯</button>
+			<button type="primary" @click="getBufferPercentage()">getBufferPercentage</button>
+			<button type="primary" @click="seekTo()">seekTo 50秒</button>
+			<button type="primary" @click="getCurrentPosition()">当前进度</button>
+			<button type="primary" @click="getDuration()">getDuration</button>
+			<button type="primary" @click="startVideo()">开始</button>
+			<button type="primary" @click="pauseVideo()">暂停</button>
+			<button type="primary" @click="stopVideo()">停止</button>
+			<button type="primary" @click="isPlaying()">isPlaying</button>
+			<button type="primary" @click="forward()">前进10秒</button>
+			<button type="primary" @click="rewind()">后退10秒</button>
+			<button type="primary" @click="setSpeed()">1.5x倍速播放</button>
+			<button type="primary" @click="getSpeed()">当前倍速</button>
+			<button type="primary" @click="changeLevel()">切换码率到1</button>
+			<button type="primary" @click="getCurrentLevel()">获取当前码率</button>
+			<button type="primary" @click="getLevelNum()">获取支持码率</button>
+			<button type="primary" @click="disableScreenCAP()">防录屏</button>
+	    </view>
+	</div>
+</template>
+
+<script>
+	var _self
+	var ScreenCAP = false;
+
+	import Head from '../../components/page-head.nvue';
+
+	export default {
+		components: {
+			Head
+		},
+		data(){
+			return{
+				title: '播放器组件',
+				progress:"CurrentPosition：",
+				videoVid: "e97dbe3e6492b053bc9b5afc677a1394_e"
+			}
+		},
+		onLoad() {
+			_self = this
+		},
+		methods: {
+			back(){
+				uni.navigateBack()
+			},
+			//输入vid
+			onVidInput: function(event) {
+				this.videoVid = event.detail.value;
+			},
+			onPlayError(e){
+				if (e.detail.errEvent != null) {
+					console.log(e.detail.errEvent)
+					uni.showToast({
+						title:'playErrorEvent - '+e.detail.errEvent,
+						icon: "none"
+					})
+				}
+			},
+			positionChange(e){
+				this.progress = "CurrentPosition："+e.detail.currentPosition
+			},
+			onPlayStatus(e){
+				if (e.detail.playbackState != null) {
+					uni.showToast({
+						title:'playbackState - '+e.detail.playbackState,
+						icon: "none"
+					})
+				} else if (e.detail.preparedToPlay != null) {
+					console.log('preparedToPlay - '+e.detail.preparedToPlay);
+					uni.showToast({
+						title:'preparedToPlay - '+e.detail.preparedToPlay,
+						icon: "none"
+					})
+				}
+			},
+			fullScreen() {
+				plus.screen.unlockOrientation();
+				plus.screen.lockOrientation('landscape');
+				uni.getScreenBrightness({
+				    success: function (res) {
+				        console.log('屏幕亮度值：' + res.value);
+				    }
+				});
+			},
+			cancelFullScreen() {
+				plus.screen.unlockOrientation();
+				plus.screen.lockOrientation('portrait-primary');
+				uni.setScreenBrightness({
+				    value: 0.2,
+				    success: function () {
+				        console.log('success');
+				    }
+				});
+			},
+			snapshot(){
+				this.$refs.vod.snapshot(null, result =>{
+					if(result.errMsg != null){
+						console.log(result.errMsg)
+					}
+				})
+			},
+			setVid(){
+			    this.$refs.vod.setVid({
+					vid: this.videoVid,
+					level:0
+				},
+					(ret) => {
+						if (ret.errMsg != null) {
+							uni.showToast({
+								title: ret.errMsg,
+								icon: "none"
+							})
+						}
+					})
+			},
+			setURL(){
+			    this.$refs.vod.setURL({
+			    	url:'https://vfx.mtime.cn/Video/2019/02/04/mp4/190204084208765161.mp4'
+			    },
+			    	(ret) => {
+			    		if (ret.errMsg != null) {
+			    			uni.showToast({
+			    				title: ret.errMsg,
+			    				icon: "none"
+			    			})
+			    		}
+			    	})
+			},
+
+			showMarquee(){
+				this.$refs.vod.showMarquee();
+			},
+			startVideo(){
+
+				this.$refs.vod.start();
+			},
+			pauseVideo(){
+
+				this.$refs.vod.pause();
+			},
+			stopVideo(){
+				this.$refs.vod.stop();
+			},
+			getDuration(){
+				this.$refs.vod.getDuration(null,result =>{
+					uni.showToast({
+						title:'duration: '+result.duration,
+						icon: "none"
+					})
+				});
+			},
+			getCurrentPosition(){
+				this.$refs.vod.getCurrentPosition(null, result => {
+					console.log("---currentPosition: "+result.currentPosition);
+					uni.showToast({
+						title:'currentPosition: '+result.currentPosition,
+						icon: "none"
+					})
+				});
+				// this.$refs.vod.getCurrentPosition();
+			},
+			getBufferPercentage(){
+				this.$refs.vod.getBufferPercentage(null, result => {
+					console.log("bufferPercentage: "+result.bufferPercentage);
+					uni.showToast({
+						title:'bufferPercentage: '+result.bufferPercentage,
+						icon: "none"
+					})
+				});
+			},
+			isPlaying(){
+				this.$refs.vod.isPlaying(null,result =>{
+					uni.showToast({
+						title:'isPlaying: '+result.isPlaying,
+						icon: "none"
+					})
+				});
+			},
+			forward(){
+				this.$refs.vod.forward({seconds:10});
+			},
+			rewind(){
+				this.$refs.vod.rewind({seconds:10});
+			},
+			seekTo(){
+				console.log("seekTo: "+ 50);
+				this.$refs.vod.seekTo({seconds:50})
+			},
+			setSpeed(){
+				this.$refs.vod.setSpeed({speed:1.5})
+			},
+			getSpeed(){
+				this.$refs.vod.getSpeed(null, result=>{
+					uni.showToast({
+						title:'speed: '+result.speed,
+						icon: "none"
+					})
+				})
+			},
+			changeLevel(){
+				this.$refs.vod.changeLevel({level:1})
+			},
+			getCurrentLevel(){
+				this.$refs.vod.getCurrentLevel(null, result=>{
+					uni.showToast({
+						title:'currentLevel: '+result.currentLevel,
+						icon: "none"
+					})
+				})
+			},
+			getLevelNum(){
+				this.$refs.vod.getLevelNum(null, result=>{
+					uni.showToast({
+						title:'levelNum: '+result.levelNum,
+						icon: "none"
+					})
+				})
+			},
+			disableScreenCAP(){
+				ScreenCAP = !ScreenCAP;
+				this.$refs.vod.disableScreenCAP({disableScreenCAP:ScreenCAP})
+				uni.showToast({
+					title:'防录屏开关: '+ScreenCAP,
+					icon: "none"
+				})
+			},
+
+		}
+	}
+</script>
+<style>
+	.title {
+		height: 140rpx;
+	}
+
+	.vod-player {
+		height:300px;
+		background-color:#333333;
+	}
+
+	.plv-vod-player {
+        flex: 1;
+    }
+</style>

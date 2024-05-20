@@ -1,0 +1,402 @@
+<template>
+	<view class="module-body">
+
+		<view class="view-header">初始化配置</view>
+		<view>
+			<input class="uni-input" style="min-height: 35px; height: 35px; border: 1px solid #cccccc;font-size: 14px;" :value="inputSign"
+			 @input="onSignInput" placeholder="请输入加密串" maxlength="-1" />
+			<button class="cell-button" type="primary" @click="configString">设置加密串</button>
+		</view>
+		<button class="cell-button" type="primary" @click="configToken">设置token</button>
+		<button class="cell-button" type="primary" @click="setViewer">设置统计参数</button>
+		<!-- 视频解码器解码类型- 0.0.6起iOS同步支持 -->
+		<button class="cell-button" type="primary" @click="openMediaCodec">打开硬解开关</button>
+		
+		<view class="view-header">仅Android使用部分</view>
+		<!-- 渲染视图类型-仅Android使用部分-->
+		<button class="cell-button" type="danger" @click="setRenderView">Android：切换RenderView</button>
+
+		<!-- 以下是获取输入视频信息 -->
+		<view class="view-header">视频信息</view>
+		<input class="uni-input" style="min-height: 40px; height: 40px; border: 1px solid #cccccc;" :value="videoVid" @input="onVidInput"
+		 placeholder="请输入视频的vid" />
+		<button class="cell-button" type="primary" @click="getVideoInfo">获取视频时长与码率</button>
+		<button class="cell-button" type="primary" @click="getFileSize">获取视频大小</button>
+		<!-- 为了方便用户手动添加视频源新增的部分 -->
+		<button class="cell-button" type="primary" @click="addVideoVid">新增该视频源</button>
+		<button class="cell-button" type="primary" @click="getVideoVids">获取视频源列表</button>
+		<button class="cell-button" type="primary" @click="deleteVideoVids">删除所有视频源</button>
+
+		<!-- 以下是下载部分 -->
+		<view class="view-header">下载部分</view>
+		<view class="download-info">
+			<text class="download-list">{{downloadlist}}</text>
+			<text class="download-progress">{{downloadProgress}}</text>
+		</view>
+		<button class="cell-button" type="Dashed" @click="listenDownloadStatus">添加下载进度回调</button>
+		<button class="cell-button" type="Dashed" @click="clearDownloadStatusListen">清空下载进度回调监听(离开页面调用)</button>
+		<button class="cell-button" type="Dashed" @click="setDownloadCallbackInterval">设置下载进度回调间隔</button>
+		<button class="cell-button" type="Dashed" @click="getDownloadList">下载视频列表</button>
+		<button class="cell-button" type="Dashed" @click="download">添加下载任务</button>
+		<button class="cell-button" type="Dashed" @click="startDownloadAll">开始下载所有视频</button>
+		<button class="cell-button" type="Dashed" @click="stopDownloadAll">停止下载所有视频</button>
+		<button class="cell-button" type="Dashed" @click="downloadVideo1">开始下载视频1</button>
+		<button class="cell-button" type="Dashed" @click="stopVideo1">停止下载视频1</button>
+		<button class="cell-button" type="Dashed" @click="videoExit">验证视频1存在</button>
+		<button class="cell-button" type="Dashed" @click="deleteVideo">删除视频</button>
+		<button class="cell-button" type="Dashed" @click="deleteAllVideo">清空所有下载视频</button>
+	</view>
+</template>
+
+<script>
+	// 首先需要通过 uni.requireNativePlugin("ModuleName") 获取 module 
+	var configModule = uni.requireNativePlugin("PLV-VodUniPlugin-ConfigModule")
+	var infoModule = uni.requireNativePlugin("PLV-VodUniPlugin-InfoModule")
+	var downloadModule = uni.requireNativePlugin("PLV-VodUniPlugin-DownloadModule")
+
+	import Head from '../../components/page-head.nvue';
+
+	export default {
+		components: {
+			Head
+		},
+
+		data() {
+			return {
+				downloadlist: "{}",
+				downloadProgress: "",
+				title: '设置加密串',
+				videoVid: "", //e97dbe3e64c247499b55f213a4470052_e
+				inputSign: "yQRmgnzPyCUYDx6weXRATIN8gkp7BYGAl3ATjE/jHZunrULx8CoKa1WGMjfHftVChhIQlCA9bFeDDX+ThiuBHLjsNRjotqxhiz97ZjYaCQH/MhUrbEURv58317PwPuGEf3rbLVPOa4c9jliBcO+22A==", //加密串配置
+				//批量下载的视频
+				downloadVideos: [{
+						vid: 'e97dbe3e6492b053bc9b5afc677a1394_e',
+						level: 1
+					}, {
+						vid: 'e97dbe3e648de6e0a40f358c342f7306_e',
+						level: 1
+					},
+					{
+						vid: 'e97dbe3e64c247499b55f213a4470052_e',
+						level: 1
+					}
+				]
+			}
+		},
+		methods: {
+			//输入加密串
+			onSignInput: function(event) {
+				this.inputSign = event.detail.value;
+			},
+			//输入视频对应的vid
+			onVidInput: function(event) {
+				this.videoVid = event.detail.value;
+			},
+			configString() {
+				// 调用异步方法
+				configModule.setConfig({
+						'config': this.inputSign
+					},
+					(ret) => {
+						if (ret.isSuccess == true) {
+							uni.showToast({
+								title: '设置加密串成功',
+								icon: "none"
+							})
+						} else {
+							let errMsg = ret.errMsg;
+							uni.showToast({
+								title: '设置加密串失败：' + errMsg,
+								icon: "none"
+							})
+						}
+					})
+			},
+			configToken() {
+				// 调用异步方法
+				configModule.setToken({
+						'userid': '',
+						'readtoken': '',
+						'writetoken': '',
+						'secretkey': ''
+					},
+					(ret) => {
+						if (ret.isSuccess == true) {
+							uni.showToast({
+								title: '设置token成功',
+								icon: "none"
+							})
+						} else {
+							let errMsg = ret.errMsg;
+							uni.showToast({
+								title: '设置token失败：' + errMsg,
+								icon: "none"
+							})
+						}
+					})
+			},
+			setViewer() {
+				configModule.setViewerId({
+					'viewerId': 'uni-12312323456'
+				})
+				configModule.setViewerName({
+					'viewerName': 'Polyv uni-app user'
+				})
+				configModule.setViewerInfo({
+					'param3': '我是自定义参数1',
+					'param4': '我是自定义参数2',
+					'param5': '我是自定义参数3'
+				})
+			},
+			openMediaCodec() {
+				configModule.openMediaCodec({
+					mediaCodec: true
+				})
+			},
+			//Android适用的配置--start
+			setRenderView() {
+				configModule.openMediaCodec({
+					renderViewType: 1
+				})
+			},
+			//---end
+
+			//----信息模块
+			getVideoInfo() {
+				infoModule.getVideoInfo({
+					vid: this.videoVid
+				}, result => {
+					if (result.errMsg == null) {
+						uni.showToast({
+							title: '视频时长为' + result.duration + '秒 码率为' + result.levelNum,
+							icon: "none"
+						})
+					} else {
+						uni.showToast({
+							title: result.errMsg,
+							icon: "none"
+						})
+					}
+				});
+			},
+			getFileSize() {
+				infoModule.getFileSize({
+					vid: this.videoVid,
+					level: 2
+				}, result => {
+					if (result.errMsg == null) {
+						uni.showToast({
+							title: '视频大小为' + result.fileSize + '字节',
+							icon: "none"
+						})
+					} else {
+						uni.showToast({
+							title: result.errMsg,
+							icon: "none"
+						})
+					}
+				});
+			},
+			getVideoVids() {
+				this.downloadlist = JSON.stringify(this.downloadVideos);
+			},
+			addVideoVid() {
+				if (!this.videoVid) {
+					uni.showToast({
+						title: '请输入视频源对应的Vid',
+						icon: "none"
+					})
+					return;
+				}
+				var isExit = false;
+				for (let i = 0; i < this.downloadVideos.length; i++) {
+					var video = this.downloadVideos[i];
+					if (video.vid === this.videoVid) {
+						isExit = true;
+					}
+				}
+				if (isExit) {
+					uni.showToast({
+						title: '该视频源已被添加',
+						icon: "none"
+					})
+				} else {
+					this.downloadVideos.push({
+						vid: this.videoVid,
+						level: 1,
+					})
+					uni.showToast({
+						title: '该视频源添加成功',
+						icon: "none"
+					})
+				}
+			},
+			deleteVideoVids() {
+				this.downloadVideos = [];
+			},
+
+			//----下载
+			setDownloadCallbackInterval() {
+				downloadModule.setDownloadCallbackInterval({
+					seconds: 0.5
+				})
+				uni.showToast({
+					title: '设置成功',
+					icon: "none"
+				})
+			},
+
+			//获取下载列表
+			getDownloadList() {
+				var that = this;
+				downloadModule.getDownloadList(null, result => {
+					console.log(result)
+					that.downloadlist = JSON.stringify(result);
+				})
+			},
+
+			//监听所有下载事件的进度和状态
+			listenDownloadStatus() {
+				var that = this;
+				downloadModule.setListenDownloadStatus(null, result => {
+					console.log(result)
+					that.downloadProgress = JSON.stringify(result);
+				})
+			},
+			////主动清空下载进度监听，否则uni-app在Android中会报错[JS Framework] Failed to receiveTasks, instance () is not available.
+			clearDownloadStatusListen(){
+				downloadModule.setListenDownloadStatus(null, null)
+			},
+
+			//下载测试
+			download() {
+				var that = this;
+				var downloadParam = {
+					downloadArr: this.downloadVideos
+				};
+				downloadModule.addDownloader(downloadParam, result => {
+					console.log(result)
+					that.downloadProgress = "\n" + JSON.stringify(result)
+				})
+			},
+
+			downloadVideo1() {
+				downloadModule.startDownloader({
+					vid: this.downloadVideos[0].vid
+				}, result => {
+					if (result.errMsg) {
+						uni.showToast({
+							title: '开始下载视频失败：' + result.errMsg,
+							icon: "none"
+						})
+					}
+				});
+			},
+
+			stopVideo1() {
+				downloadModule.stopDownloader({
+					vid: this.downloadVideos[0].vid
+				}, result => {
+					if (result.errMsg) {
+						uni.showToast({
+							title: '停止下载视频失败：' + result.errMsg,
+							icon: "none"
+						})
+					}
+				});
+			},
+
+			startDownloadAll() {
+				downloadModule.startAllDownloader();
+				uni.showToast({
+					title: 'start download all video',
+					icon: "none"
+				})
+			},
+
+			stopDownloadAll() {
+				downloadModule.stopAllDownloader();
+				uni.showToast({
+					title: 'stop download all video',
+					icon: "none"
+				})
+			},
+
+			videoExit() {
+				let ret = downloadModule.isVideoExist({
+					vid: this.downloadVideos[0].vid,
+					level: 1
+				})
+				if (ret.exist == null) {
+					let errMsg = ret.errMsg ? ret.errMsg : '获取失败'
+					uni.showToast({
+						title: errMsg,
+						icon: "none"
+					})
+				} else {
+					let exist = ret.exist ? "存在" : "不存在"
+					uni.showToast({
+						title: '视频' + exist,
+						icon: "none"
+					})
+				}
+			},
+
+			deleteVideo() {
+				downloadModule.deleteVideo({
+					vid: this.downloadVideos[0].vid
+				}, result => {
+					if (result.errMsg) {
+						uni.showToast({
+							title: '删除视频失败：' + result.errMsg,
+							icon: "none"
+						})
+					}
+				});
+			},
+
+			deleteAllVideo() {
+				downloadModule.deleteAllVideo();
+				uni.showToast({
+					title: 'delete all download video',
+					icon: "none"
+				})
+			},
+		}
+	}
+</script>
+
+<style>
+	.module-body {
+		padding: 5px 10px;
+	}
+
+	.module-input {
+		padding: 10px 0;
+	}
+
+	.view-header {
+		font-size: 17px;
+		margin: 5px 0;
+		background-color: #eaefef;
+		color: #007AFF !important;
+	}
+
+	.cell-button {
+		margin-top: 5px;
+		font-size: 14px;
+		line-height: 35px;
+		height: 35px;
+	}
+
+	.download-list {
+		background-color: #d5d9d9;
+		border-bottom-width: 1px;
+		border-color: #007AFF;
+		font-size: 13px;
+	}
+
+	.download-progress {
+		font-size: 13px;
+	}
+</style>

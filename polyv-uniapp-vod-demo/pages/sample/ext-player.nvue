@@ -1,0 +1,256 @@
+<template>
+	<view class="wrap">
+		<view :class="isFull ? 'player-full' : 'player'">
+			<plv-player
+				ref="vod"
+				class="vod-player"
+				seekType=0
+				autoPlay=true
+				disableScreenCAP=false
+				rememberLastPosition=false
+				@onPlayStatus="onPlayStatus"
+				@onPlayError="onPlayError"
+				@positionChange="positionChange">
+			</plv-player>
+			<skin ref="skin"
+				class="skin-control"
+				:defaultVolume="defaultVolume"
+				@onPlayBtnClick="onPlayBtnClick"
+				@onToSeek="onToSeek"
+				@onFullBtnClick="onFullBtnClick"
+				@onHdBtnClick="onHdBtnClick"
+				@onRateBtnClick="onRateBtnClick"
+				@onVolumeChanged="onVolumeChanged"
+				@onScreenShot="onScreenShot">
+			</skin>
+		</view>
+		<view v-if="!isFull" style="padding: 20rpx;">
+			<input class="uni-input" style="min-height: 35px; height: 35px; border: 1px solid #cccccc;font-size: 14px;" :value="videoVid"
+			 @input="onVidInput" placeholder="请输入视频vid" />
+			<button type="primary" @click="setVid()">播放</button>
+		</view>
+	</view>
+</template>
+
+<script>
+	import Head from '../../components/page-head.nvue';
+	import Skin from '../../components/plv-player-skin/skin.nvue';
+	
+	const dom = weex.requireModule('dom');
+	
+	export default {
+		components: {
+			Skin,
+			Head
+		},
+		
+		onReady() {
+			this.vodPlayer = this.$refs.vod;
+			this.skin = this.$refs.skin;
+			// plus.screen.lockOrientation('portrait-primary');
+		},
+
+		data() {
+			return {
+				title: '播放器Demo',
+				// 播放器组件
+				vodPlayer: null,
+				// 控制栏组件
+				skin: null,
+				//是否全屏
+				isFull: false,
+				// 默认音量
+				defaultVolume: 0.5,
+				videoVid: 'e97dbe3e6492b053bc9b5afc677a1394_e'
+			};
+		},
+
+		methods: {
+			//输入vid
+			onVidInput: function(event) {
+				this.videoVid = event.detail.value;
+			},
+			setVid() {
+				if(!this.videoVid) {
+					uni.showToast({
+						title: "请输入视频Vid",
+						icon: "none"
+					})
+					return;
+				}
+				const { vodPlayer } = this;
+				vodPlayer.setVid({
+					vid:this.videoVid,
+					level:0
+				}, (ret) => {
+					this.text = JSON.stringify(ret);
+					if (ret.errMsg != null) {
+						uni.showToast({
+							title: ret.errMsg,
+							icon: "none"
+						})
+					}
+				});
+			},
+
+			onPlayError(e){
+				if (e.detail.errEvent != null) {
+					uni.showToast({
+						title:'playErrorEvent - '+e.detail.errEvent,
+						icon: "none"
+					})
+				}
+			},
+
+			positionChange(e){
+				this.skin.timeUpdate(e.detail.currentPosition);
+			},
+
+			onPlayStatus(e){
+				const { skin, vodPlayer } = this;
+				const state = e.detail.playbackState;
+				const preparedToPlay = e.detail.preparedToPlay;
+				if (state != null) {
+					this.skin.changePlayStatus(state === 'start');
+				} else if (preparedToPlay != null) {
+					this.updateDuration();
+					this.updateLevels();
+				}
+			},
+			
+			updateDuration() {
+				const { vodPlayer } = this;
+				if (!vodPlayer) return;
+				vodPlayer.getDuration(null, ret => {
+					this.skin.updateDuration(ret.duration);
+				});
+			},
+			
+			updateLevels() {
+				const { vodPlayer } = this;
+				if (!vodPlayer) return;
+				
+				vodPlayer.getLevelNum(null, ret => {
+					this.skin.updateLevels(ret.levelNum);
+				});
+				
+				vodPlayer.getCurrentLevel(null, ret => {
+					this.skin.updateCurrentLevel(ret.currentLevel);
+				});
+			},
+
+			onPlayBtnClick(isPlaying) {
+				const { vodPlayer } = this;
+				if (!vodPlayer) return;
+				isPlaying ? vodPlayer.start() : vodPlayer.pause();
+			},
+			
+			onHdBtnClick(level) {
+				const { vodPlayer } = this;
+				if (!vodPlayer) return;
+				vodPlayer.changeLevel({level});
+			},
+			
+			onRateBtnClick(speed) {
+				const { vodPlayer } = this;
+				if (!vodPlayer) return;
+				vodPlayer.setSpeed({speed});
+			},
+			
+			onFullBtnClick(isFull) {
+				// plus.screen.unlockOrientation();
+				plus.navigator.setFullscreen(isFull);
+
+				//通过h5+实现横竖屏
+				// isFull ? plus.screen.lockOrientation('landscape-primary') : plus.screen.lockOrientation('portrait-primary');
+				
+				//通过原生实现横竖屏切换
+				const { vodPlayer } = this;
+				if (!vodPlayer) return;
+				isFull ? vodPlayer.changeToLandscape() : vodPlayer.changeToPortrait();
+				
+				this.isFull = isFull;
+			},
+			
+			onToSeek(time) {
+				const { vodPlayer } = this;
+				if (!vodPlayer) return;
+				vodPlayer.seekTo({seconds: time});
+			},
+			
+			onVolumeChanged(value) {
+				const { vodPlayer, skin } = this;
+				if (!vodPlayer) return;
+				vodPlayer.getVolume(null, ret => {
+					const changedValue = ret.volume + value;
+					
+					const realValue = this.limit(changedValue, 0, 1);
+					
+					vodPlayer.setVolume({volume: realValue});
+					
+					skin.updateVolumeValue(realValue);
+				});
+			},
+			
+			onScreenShot() {
+				const { vodPlayer } = this;
+				if (!vodPlayer) return;
+				
+				vodPlayer.snapshot(null, result =>{
+					if(result.errMsg != null){
+						console.log(result.errMsg)
+					}
+				});
+			},
+			
+			/**
+			* 控制最小值，最大值
+			* @param num
+			* @param min
+			* @param max
+			* @returns {*}
+			*/
+			limit(num, min, max) {
+				if (num < min) return min;
+				if (num > max) return max;
+				return num;
+			}
+		}
+	}
+</script>
+
+<style>
+	.wrap {
+		flex: 1;
+	}
+	
+	.title {
+		height: 140rpx;
+	}
+	
+	.player {
+		height: 400rpx;
+	}
+
+	.player-full {
+		flex: 1;
+	}
+	
+	.vod-player {
+		flex: 1;
+	}
+	
+	.skin-control {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		z-index: 1;
+	}
+	
+	.hide {
+		height: 0;
+	}
+	
+</style>

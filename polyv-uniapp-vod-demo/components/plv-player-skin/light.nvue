@@ -1,0 +1,68 @@
+<template>
+	<view v-if="isShow" class="plv-player-icon">
+		<image class="plv-player-icon__img" :src="imgUrl"></image>
+		<text class="plv-player-icon__text">{{ precent + '%' }}</text>
+	</view>
+</template>
+
+<script>
+	export default {
+		props: {
+			imgUrl: {
+				type: 'string',
+				required: true
+			},
+			precent: {
+				type: 'Number',
+				default: 100,
+				required: true
+			}
+		},
+		
+		watch: {
+			precent(num) {
+				if (!this.isShow) this.isShow = true;
+				this.startClock();
+			}
+		},
+
+		data() {
+			return {
+				isShow: false
+			}
+		},
+		
+		methods: {
+			startClock() {
+				this.clearClock();
+				
+				this.clock = setTimeout(() => {
+					this.isShow = false;
+				}, 1500);
+			},
+			
+			clearClock() {
+				if (this.clock) clearTimeout(this.clock);
+				this.clock = null;
+			}
+		}
+	}
+</script>
+
+<style>
+	.plv-player-icon {
+		align-items: center;
+		justify-content: center;
+	}
+	
+	.plv-player-icon__img {
+		width: 80rpx;
+		height: 80rpx;
+	}
+	
+	.plv-player-icon__text {
+		color: #FFFFFF;
+		text-align: center;
+	}
+
+</style>

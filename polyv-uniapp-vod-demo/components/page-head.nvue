@@ -1,0 +1,31 @@
+<template>
+	<view class="page-head">
+		<text class="title__text">{{title}}</text>
+	</view>
+</template>
+<script>
+	export default {
+		name: "page-head",
+		props: ['title'],
+		
+		data() {
+			return {
+				title: this.title
+			}
+		}
+	}
+</script>
+<style>
+	.page-head {
+		height: 140rpx;
+	}
+	
+	.title__text {
+		position: absolute;
+		text-align: center;
+		height: 60rpx;
+		left: 0;
+		right: 0;
+		bottom: 0;
+	}
+</style>

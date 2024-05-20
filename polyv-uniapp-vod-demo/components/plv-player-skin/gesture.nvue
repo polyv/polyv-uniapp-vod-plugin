@@ -1,0 +1,254 @@
+<template>
+	<view class="plv-player-gesture"
+		@touchstart="touchstart"
+		@touchmove="touchmove"
+		@touchend="touchend">
+	</view>
+</template>
+
+<script>
+	export default {
+		props: {
+			// 屏幕宽度（物理像素）
+			holeWidth: Number,
+			// 视频总时长
+			duration: Number,
+			// 视频当前播放时间
+			currentTime: Number
+		},
+		
+		computed: {
+			halfWidth() {
+				return parseInt(this.holeWidth / 2);
+			}
+		},
+		
+		data() {
+			return {
+				// 是否在左区域按下手势
+				downLeft: false,
+				// 滑动方向
+				swipeDir: null
+			}
+		},
+		
+		mounted() {
+			this.addHandler();
+		},
+		
+		methods:{
+			addHandler() {
+				// 增加父容器左右滑动监听
+				let finalTime = -1;
+				// 计算左右滑动seek进度
+				const countTime = (position) => {
+					const { holeWidth, duration, currentTime } = this;
+					const precent = Math.abs(position) / holeWidth;
+					const nowTime = currentTime || 0;
+					let plusTime = parseInt(Math.abs(precent * duration));
+					if (position < 0) plusTime = plusTime * -1;
+					finalTime = nowTime + plusTime;
+					finalTime = this.limit(finalTime, 0, duration);
+					return finalTime;
+				};
+				
+				this.addGesture((type, position) => {
+					switch (type) {
+						// 下滑
+						case -1:
+							// console.log('//下滑');
+							this.$emit('onGestureEvent', {
+								type: this.downLeft ? 'LEFT_DOWN' : 'RIGHT_DOWN',
+								position
+							});
+						  break;
+						// 上滑
+						case -2:
+							// console.log('//上滑');
+							this.$emit('onGestureEvent', {
+								type: this.downLeft ? 'LEFT_UP' : 'RIGHT_UP',
+								position
+							});
+						  break;
+						// 左滑
+						case 0:
+							// console.log('//左滑');
+							this.swipeDir = type;
+							countTime(position);
+							this.$emit('onGestureEvent', {
+								type: 'SEEK_TIME_UPDATE',
+								finalTime
+							});
+						  break;
+						// 右滑
+						case 1:
+							// console.log('//右滑');
+							this.swipeDir = type;
+							countTime(position);
+							this.$emit('onGestureEvent', {
+								type: 'SEEK_TIME_UPDATE',
+								finalTime
+							});
+						  break;
+						// touchend for swipe
+						case 3:
+							if (this.swipeDir > -1) {
+								this.$emit('onGestureEvent', {
+									type: this.swipeDir ? 'SWIPE_RIGHT' : 'SWIPE_LEFT'
+								});
+								this.swipeDir = -1;
+							}
+
+							if (finalTime > -1) {
+								this.$emit('onGestureSeekTo', finalTime);
+							    finalTime = -1;
+							}
+						  break;
+						// doubleTap
+						case 4:
+							// console.log('>>>> 双击');
+						  break;
+						// tap
+						case 5:
+							// console.log('>>>> 单击');
+							this.handleClick();
+						  break;
+						// longTap
+						case 6:
+						  break;
+					}
+				});
+			},
+			
+			addGesture(callback) {
+				const { options } = this;
+				let startX, startY, moveEndX, moveEndY, X, Y, position, hasType;
+				let T, lastTap, isJustTouch = true;
+			
+				const excuteCb = (type) => {
+					// type 手势类型 -2 上滑 -1 下滑 0 左滑  1 右滑  2 just touch 3 touchend 4 doubleTap 5 tap 6 longTap
+					if (callback && typeof callback === 'function')
+						callback(type, position);
+				};
+			
+				const YPlus = 20;
+				const YReduce = YPlus * -1;
+				const XPlus = 50;
+				const XReduce = XPlus * -1;
+			
+				const isXchange = () => {
+					if (X > XPlus || X < XReduce) {
+						position = X;
+						hasType = 'X';
+						isJustTouch = false;
+					}
+
+					if (X > XPlus) excuteCb(1);
+					// 左滑
+					else if (X < XReduce) excuteCb(0);
+				};
+			
+				const isYchange = () => {
+					if (Y > YPlus || Y < YReduce) {
+						position = Y;
+						hasType = 'Y';
+						isJustTouch = false;
+					}
+
+					if (Y > YPlus) excuteCb(-1);
+					// 上滑
+					else if (Y < YReduce) excuteCb(-2);
+				};
+			
+				const countDirect = () => {
+					if (hasType) {
+						hasType === 'X' ? isXchange() : isYchange();
+						return;
+					}
+					isXchange();
+					isYchange();
+				};
+				
+				this.handleTouch = (type, e) => {
+					switch(type) {
+						case 'start':
+							startX = e.changedTouches[0].pageX;
+							startY = e.changedTouches[0].pageY;
+							T = Date.now();
+							hasType = '';
+							isJustTouch = true;
+							this.downLeft = startX < this.halfWidth ? true : false;
+							break;
+						case 'move':
+							moveEndX = e.changedTouches[0].pageX;
+							moveEndY = e.changedTouches[0].pageY;
+							X = moveEndX - startX;
+							Y = moveEndY - startY;
+							countDirect();
+							break;
+						case 'end':
+							if (isJustTouch)
+								if (lastTap && Date.now() - lastTap <= 300)
+									excuteCb(4);
+								else if (Date.now() - T < 1000)
+									excuteCb(5);
+								else
+									excuteCb(6);
+							else
+								excuteCb(3);
+										
+							lastTap = Date.now();
+							isJustTouch = true;
+							break;
+					}
+				};
+			},
+			
+			handleClick() {
+				this.$emit('onGestureClick');
+			},
+			
+			touchstart(e) {
+				this.handleTouch('start', e);
+			},
+			
+			touchmove(e) {
+				this.handleTouch('move', e);
+			},
+			
+			touchend(e) {
+				this.handleTouch('end', e);
+			},
+			
+			/**
+			* 控制最小值，最大值
+			* @param num
+			* @param min
+			* @param max
+			* @returns {*}
+			*/
+			limit(num, min, max) {
+				if (num < min) return min;
+				if (num > max) return max;
+				return num;
+			}
+		}
+	}
+</script>
+
+<style>
+.plv-player-gesture {
+	flex: 1;
+	flex-direction: row;
+}
+
+.plv-player-gesture__left {
+	flex: 5;
+}
+
+.plv-player-gesture__right {
+	flex: 5;
+}
+
+
+</style>

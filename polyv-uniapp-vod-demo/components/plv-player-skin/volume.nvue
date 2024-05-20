@@ -1,0 +1,92 @@
+<template>
+	<view v-if="isShow" class="plv-player-volume-wrap">
+		<image class="plv-player-volume__img" :src="value === 0 ? muteImgUrl : imgUrl "></image>
+		<view class="plv-player-volume__progress">
+			<view class="plv-player-volume__progress__played"  :style="'flex:' + value"></view>
+			<view class="plv-player-volume__progress_surplus" :style="'flex:' + valueLeft"></view>
+		</view>
+	</view>
+</template>
+
+<script>
+	export default {
+		props: {
+			imgUrl: {
+				type: 'string',
+				required: true
+			},
+			muteImgUrl: {
+				type: 'string',
+				required: true
+			},
+			value: {
+				type: 'Number',
+				default: 0.5,
+				required: true
+			}
+		},
+		
+		watch: {
+			value(num) {
+				if (!this.isShow) this.isShow = true;
+				this.startClock();
+			}
+		},
+		
+		computed: {
+			valueLeft() {
+				return 1 - this.value;
+			}
+		},
+		
+		data() {
+			return {
+				isShow: false
+			}
+		},
+		
+		methods: {
+			startClock() {
+				this.clearClock();
+				
+				this.clock = setTimeout(() => {
+					this.isShow = false;
+				}, 1500);
+			},
+			
+			clearClock() {
+				if (this.clock) clearTimeout(this.clock);
+				this.clock = null;
+			}
+		}
+	}
+</script>
+
+<style>
+.plv-player-volume-wrap {
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+}
+
+.plv-player-volume__img {
+	width: 40rpx;
+	height: 40rpx;
+	margin-right: 10rpx;
+}
+
+.plv-player-volume__progress {
+	width: 260rpx;
+	height: 8rpx;
+	flex-direction: row;
+	background-color: #09BB07;
+}
+
+.plv-player-volume__progress__played {
+	background-color: #007AFF;
+}
+
+.plv-player-volume__progress_surplus {
+	background-color: #FFFFFF;
+}
+</style>

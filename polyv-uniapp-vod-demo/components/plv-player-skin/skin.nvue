@@ -1,0 +1,797 @@
+<template>
+	<view class="skin-wrap">
+		<gesture class="plv-player-mask"
+			:holeWidth="holeWidth"
+			:duration="duration"
+			:currentTime="currentTime"
+			@onGestureClick="handleMask"
+			@onGestureSeekTo="handleSeekTo"
+			@onGestureEvent="handleGEvent">
+		</gesture>
+		<light class="plv-player-light" :imgUrl="lightImg" :precent="lightPrecent"></light>
+		<volume class="plv-player-volume" :imgUrl="volumeImg" :muteImgUrl="volumeMuteImg" :value="volumeValue"></volume>
+		<view class="plv-player-bar" v-if="!selectStatus && showBar">
+			<image class="plv-player-bar__bg" :src="bottomBar"></image>
+			<view class="plv-player-bar__box">
+				<view class="plv-player-mr-left"></view>
+				<view class="plv-player-middle">
+					<view class="plv-player-progress">
+						<view class="plv-player-progress__play__wrap">
+							<view class="plv-player-progress__wrap__played"  :style="'flex:' + progressPrecent"></view>
+							<view class="plv-player-progress__wrap__surplus" :style="'flex:' + progressLeftOverPrecent"></view>
+						</view>
+						<view class="plv-player-progress__dot__wrap">
+							<view class="plv-player-progress__dot__box">
+								<view class="plv-player-progress__dot__played" :style="'flex:' + progressPrecent">
+									<view class="plv-player-progress__dot"></view>
+								</view>
+								<view class="plv-player-progress__dot__surplus" :style="'flex:' + progressLeftOverPrecent"></view>
+							</view>
+						</view>
+						<view class="plv-player-progress__mask"
+							@touchstart="touchstart"
+							@touchmove="touchmove"
+							@touchend="touchend"></view>
+					</view>
+					<view class="plv-player-bar-bottom">
+						<image class="plv-btn plv-player-play-btn" :src=playBtnLink @click="handlePlay"></image>
+						<view class="plv-player-time">
+							<text class="plv-player-btn__text">{{ currentTimeText }}</text>
+							<text class="plv-player-btn__text"> / </text>
+							<text class="plv-player-btn__text">{{ durationText }}</text>
+						</view>
+						<image class="plv-btn plv-player-full-btn" :src=fullBtnLink @click="handleFull"></image>
+						<text class="plv-btn plv-player-hd-btn plv-player-btn__text" @click="handleBtn(types.LEVEL)">{{ currentLevelText }}</text>
+						<text class="plv-btn plv-player-rate-btn plv-player-btn__text" @click="handleBtn(types.SPEED)">{{ currentSpeedText }}</text>
+					</view>
+				</view>
+				<view class="plv-player-mr-right"></view>
+			</view>
+		</view>
+		<view class="plv-player-select" v-if="selectStatus" @click="handleSelectClick">
+			<view class="plv-player-select__bg"></view>
+			<view class="plv-player-select__option">
+				<text v-for=" (item, index) in selects"
+					:key="index"
+					:class="{ 'select-option__text': true, active: index === currentOptionIndex}"
+					@click="selectOption(index)">
+					{{ item[0] }}
+				</text>
+			</view>
+		</view>
+		<view class="plv-player-screenshot" v-if="!selectStatus && showBar" :style="'bottom:' + screenShotY">
+			<image class="plv-player-screenshot__btn" :src="screenShotImg" @click="$emit('onScreenShot')"></image>
+		</view>
+	</view>
+</template>
+
+<script>
+	import Gesture from './gesture.nvue';
+	import Light from './light.nvue';
+	import Volume from './volume.nvue';
+	
+	const imgLink = {
+		play: 'https://play1.polyv.net/player2/demo/uniapp/pause-left-btn.png',
+		pause: 'https://play1.polyv.net/player2/demo/uniapp/play-left-btn.png',
+		full: 'https://play1.polyv.net/player2/demo/uniapp/fullscreen-btn.png',
+		normal: 'https://play1.polyv.net/player2/demo/uniapp/normalscreen-btn.png',
+		bottomBar: 'https://play1.polyv.net/player2/demo/uniapp/bottombar.png',
+		light: 'https://play1.polyv.net/player2/demo/uniapp/light.png',
+		volume: 'https://play1.polyv.net/player2/demo/uniapp/volume.png',
+		mute: 'https://play1.polyv.net/player2/demo/uniapp/mute.png',
+		screenShot: 'https://play1.polyv.net/player2/demo/uniapp/screenShot.png'
+	};
+	
+	export default {
+		components: {
+			Gesture,
+			Light,
+			Volume
+		},
+		
+		data() {
+			return {
+				// 是否显示控制栏
+				showBar: true,
+				// 控制栏自动渐隐时间（单位:秒）
+				showBarTime: 10,
+				// 播放状态
+				playStatus: true,
+				// 播放按钮图片
+				playBtnLink: imgLink.play,
+				// 全屏状态
+				fullStatus: false,
+				// 全屏按钮图片
+				fullBtnLink: imgLink.full,
+				// 控制栏渐变背景图
+				bottomBar: imgLink.bottomBar,
+				// 时间显示块
+				timeShowBlock: null,
+				// 当前播放时间
+				currentTime: null,
+				currentTimeText: '00:00',
+				// 总时长
+				duration: null,
+				durationText: null,
+				// 播放进度占总时长百分比
+				precent: 0,
+				// 进度条播放进度计算的百分比
+				progressPrecent: 0,
+				// 进度条播放进度计算的剩余百分比
+				progressLeftOverPrecent: 100,
+				// 是否正在拖拽中
+				isDraging: false,
+				// 选择面板中所有选项
+				selects: [],
+				// 选择面板是否显示中
+				selectStatus: false,
+				// 选择面板选中类型 levels:清晰度 speeds:倍速
+				types: {
+					LEVEL: 'level',
+					SPEED: 'speed'
+				},
+				// 当前选中类型
+				type: null,
+				// 可选码率
+				levels: [
+					['自动', 0],
+					['流畅', 1],
+					['高清', 2],
+					['超清', 3]
+				],
+				// 当前码率
+				level: 0,
+				// 点击了自动码率选项
+				selectedHdAuto: false,
+				// 可选倍速
+				speeds: [
+					['0.5x', 0.5],
+					['1x', 1],
+					['1.5x', 1.5],
+					['2x', 2]
+				],
+				// 当前倍速
+				speed: 1,
+				// 亮度图片
+				lightImg: imgLink.light,
+				// 亮度百分比
+				lightPrecent: 0,
+				// 音量图片
+				volumeImg: imgLink.volume,
+				volumeMuteImg: imgLink.mute,
+				// 音量值
+				volumeValue: 0.5,
+				//截图按钮
+				screenShotImg: imgLink.screenShot,
+				// 截图按钮距离底部高度
+				screenShotY: '200rpx'
+			}
+		},
+		
+		watch: {
+			type() {
+				this.selects = this[`${this.type}s`];
+			}
+		},
+		
+		computed: {
+			currentLevelText() {
+				const { levels, level } = this;
+				return levels[level][0];
+			},
+			
+			currentSpeedText() {
+				const { speeds, speed } = this;
+				return speeds[speed][0];
+			},
+			
+			currentOptionIndex() {
+				const { type, types} = this;
+				
+				if (type === types.LEVEL)
+					return this.level;
+				else
+					return this.speed;
+			}
+		},
+		
+		mounted() {
+			this.countHoleWidth();
+			this.barHide();
+		},
+		
+		methods: {
+			/**
+			 * 计算进度条总长度
+			 */
+			countHoleWidth() {
+				const { fullStatus } = this;
+				
+				const height = plus.display.resolutionHeight;
+				const width = plus.display.resolutionWidth;
+				
+				if (fullStatus)
+					this.holeWidth = height > width ? height : width;
+					
+				else
+					this.holeWidth = width < height ? width : height;
+			},
+
+			/**
+			 * Toogle修改播放按钮状态，传入forceStatus以forceStatus为主
+			 * @param {Object} forceStatus
+			 */
+			changePlayStatus(forceStatus) {
+				const { playStatus } = this;
+				let newStatus = !playStatus;
+				if (typeof forceStatus !== 'undefined')
+					newStatus = forceStatus;
+				
+				this.playStatus = newStatus;
+				this.playBtnLink = newStatus ? imgLink.play : imgLink.pause;
+			},
+			
+			/**
+			 * 播放按钮点击
+			 */
+			handlePlay() {
+				const { playStatus } = this;
+				this.changePlayStatus();
+				this.$emit('onPlayBtnClick', this.playStatus);
+			},
+
+			/**
+			 * Toogle修改全屏按钮状态
+			 */
+			changeFullStatus() {
+				const { fullStatus } = this;
+				let newStatus = !fullStatus;
+				
+				this.fullStatus = newStatus;
+				this.fullBtnLink = newStatus ? imgLink.normal : imgLink.full;
+			},
+			
+			/**
+			 * 全屏按钮点击
+			 */
+			handleFull() {
+				const { fullStatus } = this;
+				this.changeFullStatus();
+				this.$emit('onFullBtnClick', this.fullStatus);
+				this.countHoleWidth();
+
+				this.screenShotY = fullStatus ? '200rpx' : '300rpx';	
+				
+			},
+			
+			/**
+			 * 点击清晰度/倍速按钮
+			 */
+			handleBtn(type) {
+				const { selectStatus } = this;
+				this.type = type;
+				this.selectStatus = !this.selectStatus;
+			},
+			
+			/**
+			 * 选择切换清晰度/倍速
+			 * @param {Object} value
+			 */
+			selectOption(value) {
+				const { types, type, speeds } = this;
+
+				this[type] = value;
+				this.selectStatus = false;
+				
+				switch(type) {
+					case types.LEVEL:
+						this.selectedHdAuto = value === 0;
+						this.$emit('onHdBtnClick', value);
+					break;
+					case types.SPEED:
+						this.$emit('onRateBtnClick', speeds[value][1]);
+					break;
+				}
+			},
+			
+			/**
+			 * 点击空白区域
+			 */
+			handleMask() {
+				const { selectStatus, showBar } = this;
+				/**
+				 * 若清晰度显示则隐藏
+				 */
+				if (selectStatus) {
+					this.selectStatus = false;
+					return;
+				}
+				
+				if (showBar) {
+					this.showBar = false;
+				} else {
+					this.showBar = true;
+					this.barHide();
+				}
+			},
+
+			/**
+			 * 当前播放时间更新
+			 * @param {Object} time
+			 */
+			timeUpdate(time) {
+				this.currentTime = time;
+				this.currentTimeText = this.timeFormat(time);
+				this.updateProgress();
+			},
+			
+			/**
+			 * 视频总时长更新
+			 * @param {Object} duration
+			 */
+			updateDuration(duration) {
+				this.duration = duration;
+				this.timeShowBlock = duration >= 3600 ? 2 : 1;
+				this.durationText = this.timeFormat(duration);
+			},
+			
+			/**
+			 * 更新进度条显示
+			 */
+			updateProgress(precent) {
+				const { currentTime, duration, finalPrecent, isDraging } = this;
+				let _precent;
+				
+				const changeProgressWidth = (_precent) => {
+					this.progressPrecent = parseInt( _precent * 100 );
+					this.progressLeftOverPrecent = 100 - this.progressPrecent;
+				};
+
+				if (precent) {
+					// 强制使用外部传入进度百分比
+					_precent = this.limit(precent, 0, 1); 
+					changeProgressWidth(_precent);
+				} else {
+					// 计算timeupdate当前进度条百分比
+					if (!duration || isDraging) return;
+					_precent = currentTime / duration;
+					this.precent = _precent;
+					changeProgressWidth(_precent);
+				}
+				
+			},
+			
+			/**
+			 * 监听进度条拖拽seek
+			 */
+			handleTouch(type, e) {
+				switch(type) {
+					case 'start':
+						this.initTouchPageX = e.touches[0].pageX * 2;
+						this.barShow();
+					break;
+					case 'move':
+						this.isDraging = true;
+					    const touchPageX = e.touches[0].pageX * 2;
+					    const changedX = this.getChangedX(touchPageX, this.initTouchPageX);
+					    this.calcPrecentChange(changedX);
+					break;
+					case 'end':
+						if (this.isDraging) {
+							this.toSeek(this.finalPrecent);
+							this.isDraging = false;
+					    }
+					break;
+				}
+			},
+			
+			/**
+			 * 计算变化百分比
+			 * @param {Object} changedX
+			 */
+			calcPrecentChange(changedX) {
+			  const { precent, holeWidth } = this;
+			  let finalPrecent;
+			  
+			  const changedPrecent = changedX / holeWidth;
+			  finalPrecent = precent + changedPrecent;
+			  finalPrecent = this.limit(finalPrecent, 0, 1);
+			  this.updateProgress(finalPrecent);
+			  this.finalPrecent = finalPrecent;
+			},
+			
+			/**
+			 * 获取变化的X坐标
+			 * @param {Object} touchPageX touchend触发后的X坐标
+			 * @param {Object} initTouchPageX touchstart触发后的X坐标
+			 */			
+			getChangedX(touchPageX, initTouchPageX) {
+			  return touchPageX - initTouchPageX;
+			},
+			
+			touchstart(e) {
+				this.handleTouch('start', e);
+			},
+			
+			touchmove(e) {
+				this.handleTouch('move', e);
+			},
+			
+			touchend(e) {
+				this.handleTouch('end', e);
+			},
+			
+			toSeek(precent) {
+				const seekTime = parseInt(precent * this.duration);
+				if (!isNaN(seekTime)) this.$emit('onToSeek', seekTime);
+			},
+			
+			handleSeekTo(time) {
+				if (!isNaN(time)) this.$emit('onToSeek', time);
+			},
+			
+			/**
+			 * 更新可选码率
+			 * @param {Object} num
+			 */
+			updateLevels(num) {
+				if (!num) return;
+				const realNum = num + 1;
+				this.levels = this.levels.slice(0, realNum);
+			},
+			
+			/**
+			 * 更新当前码率
+			 * @param {Object} level
+			 */
+			updateCurrentLevel(level) {
+				const { selectedHdAuto } = this;
+				if (selectedHdAuto) return;
+				// 若点击自动清晰度按钮后，不更新码率显示
+				this.level = level;
+			},
+			
+			/**
+			 * 显示控制栏
+			 */
+			barShow() {
+				if (this.clock) {
+					clearTimeout(this.clock);
+					this.clock = null;
+				}
+				this.showBar = true;
+			},
+			
+			/**
+			 * 隐藏控制栏
+			 * @param {Boolean} immediately 是否立刻隐藏
+			 */
+			barHide(immediately) {
+				return;
+				const { showBarTime } = this;
+				if (this.clock) {
+					clearTimeout(this.clock);
+					this.clock = null;
+				}
+
+				this.clock = setTimeout(() => {
+					this.showBar = false;
+				}, showBarTime * 1000);
+			},
+			
+			/**
+			 * 处理手势控制
+			 * @param {Object} type 手势类型
+			 * @param {Object} value 手势变化值
+			 */
+			handleGEvent(data) {
+				switch(data.type) {
+					case 'SEEK_TIME_UPDATE':
+					break;
+					case 'LEFT_UP':
+						// console.log('LEFT_UP');
+						uni.getScreenBrightness({
+							success: (res) => {
+								this.setBrightness(res.value, data.position, 1);
+							}
+						});
+					break;
+					case 'LEFT_DOWN':
+						// console.log('LEFT_DOWN');
+						uni.getScreenBrightness({
+							success: (res) => {
+								this.setBrightness(res.value, data.position, -1);
+							}
+						});
+					break;
+					case 'RIGHT_UP':
+						// console.log('RIGHT_UP');
+						this.volumeChanged(data.position, 1);
+					break;
+					case 'RIGHT_DOWN':
+						// console.log('RIGHT_DOWN');
+						this.volumeChanged(data.position, -1);
+					break;
+				}
+			},
+			
+			/**
+			 * 设置亮度
+			 * @param {Object} currentValue 当前亮度
+			 * @param {Object} changedValue 改变值
+			 * @param {Object} isDown 若为减弱，则设置为-1，否则为1
+			 */
+			setBrightness(currentValue, changedValue, isDown) {
+				// 除6降低灵敏度
+				changedValue = Math.abs(changedValue / 6) / 100 * isDown;
+				let realValue = currentValue + changedValue;
+				realValue = this.limit(realValue, 0, 1);
+				this.lightPrecent = parseInt(realValue * 100);
+				
+				uni.setScreenBrightness({
+					value: realValue
+				});
+			},
+
+			/**
+			 * 音量变化
+			 * @param {Object} changedValue
+			 * @param {Object} isDown
+			 */
+			volumeChanged(changedValue, isDown) {
+				changedValue = Math.abs(changedValue / 10) / 100 * isDown;
+				this.$emit('onVolumeChanged', changedValue);
+			},
+			
+			/**
+			 * 更新音量变化显示
+			 * @param {Object} value
+			 */
+			updateVolumeValue(value) {
+				this.volumeValue = value;
+			},
+			
+			/**
+			 * 时间（秒）格式化
+			 * @param {Object} result
+			 */
+			timeFormat(result) {
+				const { timeShowBlock } = this;
+				
+				let h = Math.floor(result / 3600) < 10 ? '0' + Math.floor(result / 3600) : Math.floor(result / 3600);
+				let m = Math.floor((result / 60 % 60)) < 10 ? '0' + Math.floor((result / 60 % 60)) : Math.floor((result / 60 % 60));
+				let s = Math.floor((result % 60)) < 10 ? '0' + Math.floor((result % 60)) : Math.floor((result % 60));
+
+				if (timeShowBlock === 2)
+					return result = h + ':' + m + ':' + s;
+				else
+					return result = m + ':' + s;
+			},
+			
+			/**
+			* 控制最小值，最大值
+			* @param num
+			* @param min
+			* @param max
+			* @returns {*}
+			*/
+			limit(num, min, max) {
+				if (num < min) return min;
+				if (num > max) return max;
+				return num;
+			}
+		}
+	}
+</script>
+
+<style>
+	.plv-player-mask {
+		position: absolute;
+		left: 0;
+		right: 0;
+		top: 0;
+		bottom: 120rpx;
+	}
+	
+	.plv-player-bar__bg {
+		width: 1624rpx;
+		height: 120rpx;
+	}
+	
+	.plv-player-bar {
+		position: absolute;
+		left: 0;
+		right: 0;
+		height: 120rpx;
+		bottom: 0;
+	}
+	
+	.plv-player-bar__box {
+		position: absolute;
+		left: 0;
+		right: 0;
+		height: 120rpx;
+		bottom: 0;
+		flex-direction: row;
+	}
+	
+	.plv-player-mr-left {
+		flex: 10;
+	}
+	
+	.plv-player-mr-right {
+		flex: 10;
+	}
+	
+	.plv-player-middle {
+		flex: 80;
+	}
+	
+	.plv-player-progress {
+		flex: 40;
+	}
+	
+	.plv-player-progress__play__wrap {
+		flex-direction: row;
+		flex: 1;
+	}
+	
+	.plv-player-progress__wrap__played {
+		top: 20rpx;
+		height: 8rpx;
+		background-color: #0A98D5;
+	}
+	
+	.plv-player-progress__wrap__surplus {
+		top: 20rpx;
+		height: 8rpx;
+		background-color: #FFFFFF;
+	}
+	
+	.plv-player-progress__dot__wrap {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		z-index: 1;
+	}
+	
+	.plv-player-progress__dot__box {
+		flex: 1;
+		flex-direction: row;
+	}
+	
+	.plv-player-progress__dot__played {
+		flex: 20;
+	}
+	
+	.plv-player-progress__dot__surplus {
+		flex: 80;
+	}
+	
+	.plv-player-progress__mask {
+		position: absolute;
+		top: 0;
+		right: 0;
+		left: 0;
+		bottom: 0;
+		border-radius: 4rpx;
+		z-index: 2;
+	}
+	
+	.plv-player-progress__dot {
+		position: absolute;
+		width: 10rpx;
+		height: 30rpx;
+		top: 8rpx;
+		right: 0;
+		border-radius: 4rpx;
+		background-color: #FFFFFF;
+		/* transform: translateX(15rpx); */
+	}
+	
+	.plv-player-bar-bottom {
+		flex-direction: row;
+		flex: 60;
+	}
+
+	.plv-btn {
+		position: relative;
+		width: 64rpx;
+		height: 64rpx;
+		top: 8rpx;
+		bottom: 0;
+		margin-right: 10rpx;
+	}
+	
+	.plv-player-full-btn {
+		position: absolute;
+		right: 0;
+	}
+	
+	.plv-player-hd-btn {
+		position: absolute;
+		right: 64rpx;
+	}
+	
+	.plv-player-rate-btn {
+		position: absolute;
+		right: 128rpx;
+	}
+	
+	.plv-player-time {
+		position: relative;
+		top: 8rpx;
+		flex-direction: row
+	}
+	
+	.plv-player-select {
+		position: absolute;
+		width: 200rpx;
+		right: 0;
+		top: 0;
+		bottom: 0;
+		z-index: 1;
+	}
+	
+	.plv-player-select__bg {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		background-color: #0A98D5;
+		opacity: 0.5;
+	}
+	
+	.plv-player-select__option {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		justify-content: center;
+		align-items: center;
+	}
+	
+	.plv-player-btn__text {
+		color: #FFFFFF;
+		font-size: 28rpx;
+		line-height: 64rpx;
+	}
+	
+	.select-option__text {
+		color: #FFFFFF;
+		font-size: 28rpx;
+		line-height: 20rpx;
+		text-align: center;
+	}
+	
+	.active {
+		color: #0A98D5;
+	}
+	
+	.plv-player-light {
+		flex: 1;
+		align-items: center;
+	}
+	
+	.plv-player-volume {
+		position: absolute;
+		top: 50rpx;
+		left: 0;
+		right: 0;
+		height: 80rpx;
+	}
+	
+	.plv-player-screenshot {
+		position: absolute;
+		margin-left: 80rpx;
+	}
+	
+	.plv-player-screenshot__btn {
+		width: 80rpx;
+		height: 80rpx;
+	}
+</style>

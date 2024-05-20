@@ -1,0 +1,29 @@
+{
+  "nativePlugins": [
+    {
+      "hooksClass": "com.easefun.plvvod.PolyvAppProxy",
+      "plugins": [
+        {
+          "type": "component",
+          "name": "plv-player",
+          "class": "com.easefun.plvvod.PolyvVodComponent"
+        },
+        {
+          "type": "module",
+          "name": "PLV-VodUniPlugin-ConfigModule",
+          "class": "com.easefun.plvvod.PolyvConfigModule"
+        },
+        {
+          "type": "module",
+          "name": "PLV-VodUniPlugin-DownloadModule",
+          "class": "com.easefun.plvvod.PolyvDownloadModule"
+        },
+        {
+          "type": "module",
+          "name": "PLV-VodUniPlugin-InfoModule",
+          "class": "com.easefun.plvvod.PolyvVideoInfoModule"
+        }
+      ]
+    }
+  ]
+}

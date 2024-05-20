@@ -1,0 +1,246 @@
+<template>
+	<div class="video-body">
+		<view class="video-list-body">
+			<view class="video-list" v-for="(video, index) in downloadList">
+				<view class="title-cell-view">
+					<text class="title-cell-title">{{video.title}}</text>
+					<text class="title-cell-status">{{progressVid[video.vid].downloadStatus}}</text>
+				</view>
+
+				<text class="title-cell-progress">视频vid: {{video.vid}}</text>
+				<view>
+					<progress :percent="progressVid[video.vid].downloadPercentage" show-info stroke-width="3" />
+				</view>
+				<view class="action-cell">
+					<text v-if="video.progress < 100" class="download-btn" @click="stopVideo(video.vid)">停止下载</text>
+					<text v-if="video.progress < 100" class="download-btn" @click="downloadVideo(video.vid)">继续下载</text>
+					<text class="download-btn" @click="deleteVideo(video.vid)">删除</text>
+					<text class="download-btn" @click="playVideo(video.vid)">播放</text>
+				</view>
+			</view>
+		</view>
+		<view class="fix-bottom">
+			<text class="fix-bottom-item" style="border-left-width: none;" @click="downloadAll">全部开始</text>
+			<text class="fix-bottom-item" @click="stopAll">全部暂停</text>
+			<text class="fix-bottom-item" @click="clearDownload">清空下载</text>
+		</view>
+	</div>
+</template>
+
+<script>
+	// 首先需要通过 uni.requireNativePlugin("ModuleName") 获取 module
+	var configModule = uni.requireNativePlugin("PLV-VodUniPlugin-ConfigModule")
+	var downloadModule = uni.requireNativePlugin("PLV-VodUniPlugin-DownloadModule")
+
+	export default {
+		data() {
+			return {
+				downloadList: [],
+				progressVid: {},
+			};
+		},
+		onLoad() {
+			//设置下载回调间隔
+			downloadModule.setDownloadCallbackInterval({
+				seconds: 0.5
+			})
+			this.listenDownloadStatus();
+			this.getDownloadList();
+		},
+		onUnload() {
+			//清除监听
+			downloadModule.setListenDownloadStatus(null);
+		},
+		methods: {
+			//获取下载列表
+			getDownloadList() {
+				var that = this;
+				downloadModule.getDownloadList(null, result => {
+					console.log(JSON.stringify(result))
+					var vids = {}
+					for (let index = 0; index < result.downloadList.length; index++) {
+						var video = result.downloadList[index];
+						vids[video.vid] = {
+							downloadPercentage: video.progress.toFixed(2),
+							downloadStatus: "",
+							errMsg: ""
+						};
+					}
+					console.log("*****" + JSON.stringify(vids));
+					that.progressVid = vids;
+					that.downloadList = result.downloadList;
+				})
+			},
+			//监听所有下载事件的进度和状态
+			listenDownloadStatus() {
+				var that = this;
+				downloadModule.setListenDownloadStatus(null, result => {
+					for (var key in result) {
+						var downloadData = that.progressVid[key] ? that.progressVid[key] : {},
+							res = result[key];
+						if (res["downloadPercentage"]) {
+							downloadData["downloadPercentage"] = res["downloadPercentage"].toFixed(2);
+						}
+						if (res["downloadStatus"]) {
+							downloadData["downloadStatus"] = res["downloadStatus"];
+						}
+						that.progressVid[key] = downloadData;
+					}
+					console.log(that.progressVid);
+				})
+			},
+			downloadVideo(vid) {
+				console.log(vid);
+				downloadModule.startDownloader({
+					vid: vid
+				}, result => {
+					if (result.errMsg) {
+						uni.showToast({
+							title: '开始下载视频失败：' + result.errMsg,
+							icon: "none"
+						})
+					}
+				});
+			},
+			stopVideo(vid) {
+				downloadModule.stopDownloader({
+					vid: vid
+				}, result => {
+					if (result.errMsg) {
+						uni.showToast({
+							title: '停止下载视频失败：' + result.errMsg,
+							icon: "none"
+						})
+					}
+				});
+			},
+			playVideo(vid) {
+				console.log(vid);
+				uni.navigateTo({
+					url: '/pages/demo/ext-ply-player?id=' + vid
+				});
+			},
+			downloadAll() {
+				downloadModule.startAllDownloader();
+				uni.showToast({
+					title: 'start download all video',
+					icon: "none"
+				})
+			},
+			stopAll() {
+				downloadModule.stopAllDownloader();
+				uni.showToast({
+					title: 'stop download all video',
+					icon: "none"
+				})
+			},
+			deleteVideo(vid) {
+				var that = this;
+				downloadModule.deleteVideo({
+					vid: vid
+				}, result => {
+					if (result.errMsg) {
+						uni.showToast({
+							title: '删除视频失败：' + result.errMsg,
+							icon: "none"
+						})
+					} else {
+						uni.showToast({
+							title: '删除成功',
+							icon: "none"
+						})
+					}
+				});
+				this.getDownloadList();
+			},
+			clearDownload() {
+				downloadModule.deleteAllVideo();
+				uni.showToast({
+					title: 'delete all download video',
+					icon: "none"
+				})
+				this.getDownloadList();
+			}
+		}
+	}
+</script>
+
+<style>
+	.video-body {
+		font-size: 32rpx;
+	}
+
+	.video-list-body {
+		padding: 20rpx;
+	}
+
+	.video-list {
+		padding: 10rpx 20rpx 0;
+		background-color: #FFFFFF;
+		margin-bottom: 20rpx;
+	}
+
+	.action-cell {
+		flex-direction: row;
+		text-align: center;
+		padding: 20rpx 0;
+	}
+
+	.title-cell-view {
+		flex-direction: row;
+		padding-top: 20rpx;
+	}
+
+	.title-cell-title {
+		font-size: 28rpx;
+		width: 300rpx;
+		height: 45rpx;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.title-cell-status {
+		font-size: 32rpx;
+		font-weight: bold;
+		padding-left: 30px;
+		color: #007AFF;
+	}
+
+	.title-cell-progress {
+		font-size: 26rpx;
+	}
+
+	.play-btn {
+		flex: 0.3;
+		color: #FFFFFF;
+		background-color: #007AFF;
+	}
+
+	.download-btn {
+		margin-left: 20rpx;
+		flex: 0.3;
+		color: #FFFFFF;
+		text-align: center;
+		font-size: 32rpx;
+		padding: 10rpx 0;
+		background-color: #007AFF;
+	}
+
+	.fix-bottom {
+		text-align: center;
+		background-color: #FFFFFF;
+		font-size: 32rpx;
+		flex-direction: row;
+		text-align: center;
+		padding: 10rpx 0;
+	}
+
+	.fix-bottom-item {
+		flex: 1;
+		border-left-color: #007AFF;
+		border-left-width: 1px;
+		text-align: center;
+		color: #007AFF;
+	}
+</style>

@@ -1,0 +1,149 @@
+<template>
+	<view class="video-body">
+		<view class="video-list-body">
+			<view class="video-list" v-for="(video, index) in videoList">
+				<text class="title-cell">视频vid: {{video.vid}}</text>
+				<view class="action-cell">
+					<text class="play-btn" @click="playVideo(index)">播放</text>
+					<text class="download-btn" @click="downloadVideo(index)">下载</text>
+				</view>
+			</view>
+		</view>
+		<text class="fix-bottom" @click="downloadList">下载列表</text>
+	</view>
+</template>
+
+<script>
+	// 首先需要通过 uni.requireNativePlugin("ModuleName") 获取 module
+	var configModule = uni.requireNativePlugin("PLV-VodUniPlugin-ConfigModule")
+	var downloadModule = uni.requireNativePlugin("PLV-VodUniPlugin-DownloadModule")
+
+	export default {
+		data() {
+			return {
+				videoList: [{
+						vid: 'e97dbe3e6492b053bc9b5afc677a1394_e',
+						level: 1
+					}, {
+						vid: 'e97dbe3e648de6e0a40f358c342f7306_e',
+						level: 1
+					},
+					{
+						vid: 'e97dbe3e64c247499b55f213a4470052_e',
+						level: 1
+					}
+				],
+			};
+		},
+		onLoad() {
+			// 设置加密串。正式项目不建议直接明文设置
+			configModule.setConfig({
+					'config': "yQRmgnzPyCUYDx6weXRATIN8gkp7BYGAl3ATjE/jHZunrULx8CoKa1WGMjfHftVChhIQlCA9bFeDDX+ThiuBHLjsNRjotqxhiz97ZjYaCQH/MhUrbEURv58317PwPuGEf3rbLVPOa4c9jliBcO+22A==", //加密串配置
+				},
+				(ret) => {
+					if (ret.isSuccess == true) {
+						uni.showToast({
+							title: '设置加密串成功',
+							icon: "none"
+						})
+					} else {
+						let errMsg = ret.errMsg;
+						uni.showToast({
+							title: '设置加密串失败：' + errMsg,
+							icon: "none"
+						})
+					}
+				})
+		},
+		methods: {
+			playVideo(index) {
+				console.log(index);
+				uni.navigateTo({  
+				    url: '/pages/demo/ext-ply-player?id=' + this.videoList[index].vid
+				});
+			},
+			downloadVideo(index) {
+				let ret = downloadModule.isVideoExist(this.videoList[index])
+				console.log("下载视频" + JSON.stringify(this.videoList[index]) + JSON.stringify(ret));				
+				if (ret.exist == null) {
+					let errMsg = ret.errMsg ? ret.errMsg : '获取失败'
+					uni.showToast({
+						title: errMsg,
+						icon: "none"
+					})
+				} else {
+					if (ret.exist) {
+						uni.showToast({
+							title: '视频已存在',
+							icon: "none"
+						})
+					} else {
+						var that = this;
+						var downloadParam = {
+							downloadArr: [this.videoList[index]]
+						};
+						downloadModule.addDownloader(downloadParam, result => {
+							console.log(result);
+						})
+					}
+				}
+			},
+			downloadList() {
+				uni.navigateTo({
+					url: "/pages/demo/ext-download"
+				});
+			}
+		}
+	}
+</script>
+
+<style>
+	.video-body {
+		font-size: 28rpx;
+		text-align: center;
+	}
+
+	.video-list-body {
+		padding: 20rpx;
+	}
+
+	.video-list {
+		padding: 10rpx 20rpx 0;
+		margin-top: 20rpx;
+		background-color: #FFFFFF;
+	}
+
+	.action-cell {
+		flex-direction: row;
+		text-align: center;
+		padding: 20rpx 0;
+	}
+
+	.title-cell {
+		padding-top: 20rpx;
+		font-size: 26rpx;
+	}
+
+	.play-btn {
+		flex: 0.3;
+		color: #FFFFFF;
+		text-align: center;
+		background-color: #007AFF;
+	}
+
+	.download-btn {
+		margin-left: 20rpx;
+		flex: 0.3;
+		color: #FFFFFF;
+		text-align: center;
+		background-color: #007AFF;
+	}
+
+	.fix-bottom {
+		text-align: center;
+		background-color: #FFFFFF;
+		font-size: 34rpx;
+		padding: 20rpx 0;
+		color: #007AFF;
+	}
+</style>
