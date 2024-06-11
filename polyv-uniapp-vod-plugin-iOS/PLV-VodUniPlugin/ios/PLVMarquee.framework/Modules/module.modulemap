@@ -1,0 +1,6 @@
+framework module PLVMarquee {
+  umbrella header "PLVMarquee-umbrella.h"
+
+  export *
+  module * { export * }
+}

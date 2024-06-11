@@ -1,0 +1,97 @@
+/**
+* @file 拖动进度提示组件
+*/
+<template>
+	<view class="plv-player-drag-tips">
+		<view class="plv-player-drag-tips__box">
+			<image class="plv-player-drag-tips__direction-img" :src="imgSrc"
+				@error="imageError">
+			</image>
+			<text class="plv-player-drag-tips__time">
+				{{changeTimeFormat}} / {{durationFormat}}
+			</text>
+		</view>
+	</view>
+</template>
+
+<script>
+	import utils from '@/common/util.js';
+	import backImg from '@/static/skin/back.png';
+	import forwardImg from '@/static/skin/forward.png'
+	
+	export default {
+		props: {
+			currentTime: {
+				type: Number
+			},
+			
+			duration: {
+				type: Number
+			},
+			
+			changeTime: {
+				type: Number
+			}
+		},
+		
+		data() {
+			return {
+			  isForward: false
+			}
+		},
+		
+			
+		watch: {
+			changeTime(newValue, oldValue){
+				this.isForward = newValue > oldValue;
+			}
+		},
+		
+		computed: {
+			timeFormatType() {
+				this.duration >= 3600 ? 2 : 1;
+			},
+			
+			changeTimeFormat() {
+				return utils.formatTimeByDuration(this.changeTime, this.timeFormatType);
+			},
+			
+			durationFormat() {
+				return utils.formatTimeByDuration(this.duration, this.timeFormatType)
+			},
+			
+			imgSrc() {
+				return this.isForward ? forwardImg : backImg;
+			}
+		}
+	}
+</script>
+
+<style>
+	.plv-player-drag-tips {
+		width: 250rpx;
+		height: 160rpx;
+		background: rgba(0,0,0,.7);
+		border-radius: 10rpx;
+	}
+	
+	.plv-player-drag-tips__box {
+		position: absolute;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		left: 0;
+		justify-content: center;
+		align-items: center;
+	}
+	
+	.plv-player-drag-tips__direction-img {
+		width: 100rpx;
+		height: 100rpx;
+	}
+	
+	.plv-player-drag-tips__time {
+		font-size: 24rpx;
+		color: #FFFFFF;
+	}
+</style>

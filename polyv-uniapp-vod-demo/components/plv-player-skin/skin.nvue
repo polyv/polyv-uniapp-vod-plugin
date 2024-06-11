@@ -1,16 +1,28 @@
 <template>
 	<view class="skin-wrap">
+		<view class="plv-player-comp-box"  :style="{
+			'width': (holeWidth) + 'px'
+		}">
+			<view class="plv-player-longpress-speed" v-if="isInLongPress && !isLock">
+				<image class="plv-player-longpress-speed__image" src="@/static/skin/forward.png"></image>
+				<text class="plv-player-longpress-speed__text">快进x2.0</text>
+			</view>
+			<drag-tips class="plv-player-skin-drag-tips" v-if="showGestureSeekTips" :duration="duration" :changeTime="gestureChangeSeekTime" :currentTime="currentTime"></drag-tips>
+		</view>
 		<gesture class="plv-player-mask"
 			:holeWidth="holeWidth"
 			:duration="duration"
 			:currentTime="currentTime"
+			@onLongPress="handleLongPress"
+			@onTouchCancel="handleTouchCancel"
 			@onGestureClick="handleMask"
+			@onTouchEnd="handleTouchEnd"
 			@onGestureSeekTo="handleSeekTo"
 			@onGestureEvent="handleGEvent">
 		</gesture>
 		<light class="plv-player-light" :imgUrl="lightImg" :precent="lightPrecent"></light>
 		<volume class="plv-player-volume" :imgUrl="volumeImg" :muteImgUrl="volumeMuteImg" :value="volumeValue"></volume>
-		<view class="plv-player-bar" v-if="!selectStatus && showBar">
+		<view class="plv-player-bar" v-if="!selectStatus && showBar && !isLock">
 			<image class="plv-player-bar__bg" :src="bottomBar"></image>
 			<view class="plv-player-bar__box">
 				<view class="plv-player-mr-left"></view>
@@ -22,7 +34,7 @@
 						</view>
 						<view class="plv-player-progress__dot__wrap">
 							<view class="plv-player-progress__dot__box">
-								<view class="plv-player-progress__dot__played" :style="'flex:' + progressPrecent">
+								<view class="plv-player-progress__dot__played" :style="'flex:' + (progressPrecent || 1)">
 									<view class="plv-player-progress__dot"></view>
 								</view>
 								<view class="plv-player-progress__dot__surplus" :style="'flex:' + progressLeftOverPrecent"></view>
@@ -40,28 +52,34 @@
 							<text class="plv-player-btn__text"> / </text>
 							<text class="plv-player-btn__text">{{ durationText }}</text>
 						</view>
-						<image class="plv-btn plv-player-full-btn" :src=fullBtnLink @click="handleFull"></image>
+						<image class="plv-btn plv-player-full-btn" :src="fullBtnLink" @click="handleFull"></image>
 						<text class="plv-btn plv-player-hd-btn plv-player-btn__text" @click="handleBtn(types.LEVEL)">{{ currentLevelText }}</text>
 						<text class="plv-btn plv-player-rate-btn plv-player-btn__text" @click="handleBtn(types.SPEED)">{{ currentSpeedText }}</text>
+						<text class="plv-btn plv-player-scaling-btn plv-player-btn__text" @click="handleBtn(types.SCALING)">画面</text>
 					</view>
 				</view>
 				<view class="plv-player-mr-right"></view>
 			</view>
 		</view>
-		<view class="plv-player-select" v-if="selectStatus" @click="handleSelectClick">
+		<view class="plv-player-select" v-if="selectStatus">
 			<view class="plv-player-select__bg"></view>
 			<view class="plv-player-select__option">
 				<text v-for=" (item, index) in selects"
 					:key="index"
+					class="plv-player-select__option__item"
 					:class="{ 'select-option__text': true, active: index === currentOptionIndex}"
 					@click="selectOption(index)">
 					{{ item[0] }}
 				</text>
 			</view>
 		</view>
-		<view class="plv-player-screenshot" v-if="!selectStatus && showBar" :style="'bottom:' + screenShotY">
+		<view class="plv-player-screenshot" v-if="!selectStatus && showBar && !isLock" :style="'bottom:' + screenShotY">
 			<image class="plv-player-screenshot__btn" :src="screenShotImg" @click="$emit('onScreenShot')"></image>
 		</view>
+		<view class="plv-player-lock" v-if="!selectStatus && showBar" :style="'bottom:' + screenShotY">
+			<image class="plv-player-lock__btn" :src="lockImgSrc" @click="isLock = !isLock"></image>
+		</view>
+		
 	</view>
 </template>
 
@@ -69,7 +87,10 @@
 	import Gesture from './gesture.nvue';
 	import Light from './light.nvue';
 	import Volume from './volume.nvue';
-	
+	import DragTips from '@/components/plv-player-skin/drag-tips.nvue';
+	import LockImg from '@/static/skin/lock.png';
+	import UnLockImg from '@/static/skin/unlock.png';
+	// 部分img 放到了static/skin目录下
 	const imgLink = {
 		play: 'https://play1.polyv.net/player2/demo/uniapp/pause-left-btn.png',
 		pause: 'https://play1.polyv.net/player2/demo/uniapp/play-left-btn.png',
@@ -86,7 +107,8 @@
 		components: {
 			Gesture,
 			Light,
-			Volume
+			Volume,
+			DragTips
 		},
 		
 		data() {
@@ -128,7 +150,8 @@
 				// 选择面板选中类型 levels:清晰度 speeds:倍速
 				types: {
 					LEVEL: 'level',
-					SPEED: 'speed'
+					SPEED: 'speed',
+					SCALING: 'scaling'
 				},
 				// 当前选中类型
 				type: null,
@@ -164,7 +187,21 @@
 				//截图按钮
 				screenShotImg: imgLink.screenShot,
 				// 截图按钮距离底部高度
-				screenShotY: '200rpx'
+				screenShotY: '200rpx',
+				
+				showGestureSeekTips: false,
+				// 手势拖动时
+				gestureChangeSeekTime: 0,
+				
+				seekedNeedPlay: false,
+				// 是否锁屏
+				isLock: false,
+				// 视频拉伸模式文案
+				scalings: [['居中', 0], ['适应', 1], ['填充',2], ['拉伸', 3]],
+				// 拉伸模式
+				scaling: undefined,
+				// 是否处于长按的状态
+				isInLongPress: false
 			}
 		},
 		
@@ -188,10 +225,26 @@
 			currentOptionIndex() {
 				const { type, types} = this;
 				
-				if (type === types.LEVEL)
-					return this.level;
-				else
-					return this.speed;
+				switch(type) {
+					case types.LEVEL: {
+						return this.level;
+					}
+					case types.SPEED: {
+						return  this.speed;
+					}
+					case types.SCALING: {
+						return this.scaling;
+					}
+				}
+				
+				// if (type === types.LEVEL)
+				// 	return this.level;
+				// else
+				// 	return this.speed;
+			},
+			
+			lockImgSrc() {
+				return this.isLock ? LockImg: UnLockImg;
 			}
 		},
 		
@@ -209,6 +262,7 @@
 				
 				const height = plus.display.resolutionHeight;
 				const width = plus.display.resolutionWidth;
+				
 				
 				if (fullStatus)
 					this.holeWidth = height > width ? height : width;
@@ -229,6 +283,16 @@
 				
 				this.playStatus = newStatus;
 				this.playBtnLink = newStatus ? imgLink.play : imgLink.pause;
+			},
+			
+			pause() {
+				this.playStatus = true;
+				this.handlePlay();
+			},
+			
+			play() {
+				this.playStatus = false;
+				this.handlePlay();
 			},
 			
 			/**
@@ -290,6 +354,9 @@
 					break;
 					case types.SPEED:
 						this.$emit('onRateBtnClick', speeds[value][1]);
+					break;
+					case types.SCALING:
+						this.$emit('onScalingBtnClick', value);
 					break;
 				}
 			},
@@ -360,6 +427,12 @@
 				}
 				
 			},
+			/**
+			 * 更新视频画面缩放模式
+			 */
+			updateScaling(mode) {
+				this.scaling = mode;
+			},
 			
 			/**
 			 * 监听进度条拖拽seek
@@ -427,7 +500,15 @@
 			},
 			
 			handleSeekTo(time) {
-				if (!isNaN(time)) this.$emit('onToSeek', time);
+				if (!isNaN(time)) {
+					this.$emit('onToSeek', time);
+					setTimeout(() => {
+						if (this.seekedNeedPlay) {
+							this.play();
+							this.seekedNeedPlay = false;
+						}
+					}, 100)
+				}
 			},
 			
 			/**
@@ -437,7 +518,16 @@
 			updateLevels(num) {
 				if (!num) return;
 				const realNum = num + 1;
-				this.levels = this.levels.slice(0, realNum);
+				var allLevels = [
+						['自动', 0],
+						['流畅', 1],
+						['高清', 2],
+						['超清', 3]
+					];
+				this.levels = allLevels.slice(0, realNum);
+				if (this.type === this.types.LEVEL) {
+					this.selects = this.levels;
+				}
 			},
 			
 			/**
@@ -486,7 +576,27 @@
 			 */
 			handleGEvent(data) {
 				switch(data.type) {
-					case 'SEEK_TIME_UPDATE':
+					case 'SEEK_TIME_UPDATE': {
+						
+						if (this.playStatus) {
+							this.seekedNeedPlay = true;
+							this.pause();
+						}
+						 const { finalTime } = data;
+						 if (isNaN(finalTime)) {
+							 return;
+						 }
+						 this.gestureChangeSeekTime = finalTime;
+						 this.showGestureSeekTips = true;
+						 clearTimeout(this.$options.gestureTimeout);
+						 
+						 // 600ms后隐藏tips
+						 this.$options.gestureTimeout = setTimeout(() => {
+						 	this.showGestureSeekTips = false;
+							this.gestureChangeSeekTime = 0;
+						 }, 600)
+						 
+					}
 					break;
 					case 'LEFT_UP':
 						// console.log('LEFT_UP');
@@ -511,6 +621,14 @@
 					case 'RIGHT_DOWN':
 						// console.log('RIGHT_DOWN');
 						this.volumeChanged(data.position, -1);
+					break;
+					case 'DOUBLE_CLICK':
+						console.log('DOUBLE_CLICK');
+						if (this.playStatus) {
+							this.pause();
+						} else {
+							this.play();
+						}
 					break;
 				}
 			},
@@ -579,6 +697,28 @@
 				if (num < min) return min;
 				if (num > max) return max;
 				return num;
+			},
+			
+			handleTouchCancel() {
+				if (this.isLock) return;
+				if (this.isInLongPress) {
+					this.isInLongPress = false;
+					this.$emit('onRateBtnClick', 1);
+				}
+				
+			},
+			// 特殊情况如果不触发touchcancel, 触发touchend时取消长按状态
+			handleTouchEnd() {
+				this.handleTouchCancel()
+			},
+			
+				
+			handleLongPress() {
+				if (this.isLock) return;
+				this.isInLongPress = true;
+					
+				this.play();
+				this.$emit('onRateBtnClick', 2);
 			}
 		}
 	}
@@ -720,6 +860,11 @@
 		right: 128rpx;
 	}
 	
+	.plv-player-scaling-btn {
+		position: absolute;
+		right: 210rpx;
+	}
+	
 	.plv-player-time {
 		position: relative;
 		top: 8rpx;
@@ -750,10 +895,15 @@
 		top: 0;
 		bottom: 0;
 		left: 0;
-		right: 0;
+		right: 20rpx;
 		justify-content: center;
 		align-items: center;
 	}
+	
+	.plv-player-select__option__item {
+		padding: 18rpx;
+	}
+	
 	
 	.plv-player-btn__text {
 		color: #FFFFFF;
@@ -793,5 +943,64 @@
 	.plv-player-screenshot__btn {
 		width: 80rpx;
 		height: 80rpx;
+	}
+	
+	.plv-player-lock {
+		position: absolute;
+		right: 80rpx;
+		width: 80rpx;
+		height: 80rpx;
+		background: rgba(0,0,0, .5);
+		border-radius: 40rpx;
+		justify-content: center;
+		align-items: center;
+	}
+	
+	.plv-player-lock__btn {
+		width: 48rpx;
+		height: 48rpx;
+	}
+	
+	.plv-player-skin-drag-tips {
+		position: absolute;
+		top: 60rpx;
+		justify-content: center;
+		align-items: center;
+		flex-direction: row;
+	/* 	justify-content: center;
+		align-items: center; */
+	}
+	
+	.plv-player-longpress-speed {
+		position: absolute;
+		width: 175rpx;
+		padding: 10rpx;
+		flex-direction: row;
+		justify-content: center;
+		align-items: center;
+		top: 40rpx;
+		border-radius: 15px;
+		background: rgba(0,0,0,.8);
+	}
+
+	
+	.plv-player-longpress-speed__image {
+		width: 40rpx;
+		height: 40rpx;
+	}
+	
+	.plv-player-longpress-speed__text {
+		color: #FFFFFF;
+		font-size: 28rpx;
+	}
+	
+	.plv-player-comp-box {
+		position: absolute;
+		height: 300rpx;
+		left: 0;
+		top: 0;
+		z-index: 0;
+		justify-content: center;
+		align-items: center;
 	}
 </style>

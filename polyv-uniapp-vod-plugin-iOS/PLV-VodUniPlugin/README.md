@@ -8,7 +8,8 @@
 
 - 推荐使用从服务端获取加密串，APP 本地解密的方式（开发者设计自己的加解密方式），通过 ConfigModule 的 setToken 方法进行配置。setConfig 安全性不如 setToken 方式，不推荐使用在正式环境。
 * 请务必通过 ConfigModule 的 setViewerId 设置观众ID，观众ID是后台区分用户的唯一标识别，可用于排查问题。
-- Android端自v0.1.0+已经解决云打包与uni-app官方原生插件`VideoPlayer（视频播放）`、`Payment（支付）`产生依赖冲突导致云打包失败的问题，**Android端集成请务必同时集成[Polyv播放器插件-Android](https://ext.dcloud.net.cn/plugin?id=4798)**。旧版本可以仍旧解决方案请点击文档说明：[《Android Uni app 插件冲突解决指南》](https://github.com/polyv/polyv-uniapp-cloudclass-plugin-android/wiki/Android-Uni-app-%E6%8F%92%E4%BB%B6%E5%86%B2%E7%AA%81%E8%A7%A3%E5%86%B3%E6%8C%87%E5%8D%97)
+- Android端自v0.1.0+已经解决云打包与uni-app官方原生插件`VideoPlayer（视频播放）`、`Payment（支付）`产生依赖冲突导致云打包失败的问题，**Android端集成请务必同时集成[Polyv播放器插件](https://ext.dcloud.net.cn/plugin?id=4798)**。旧版本可以仍旧解决方案请点击文档说明：[《Android Uni app 插件冲突解决指南》](https://github.com/polyv/polyv-uniapp-cloudclass-plugin-android/wiki/Android-Uni-app-%E6%8F%92%E4%BB%B6%E5%86%B2%E7%AA%81%E8%A7%A3%E5%86%B3%E6%8C%87%E5%8D%97)
+- iOS 端自0.2.2+需要同时集成 **[Polyv播放器插件](https://ext.dcloud.net.cn/plugin?id=4798)**。
 - iOS 端自0.1.6+需要同时集成 [Polyv UTDID 插件-iOS](https://ext.dcloud.net.cn/plugin?id=7750)。如果本插件同时集成了 支付模块的支付宝支付 则不需要集成 [Polyv UTDID 插件-iOS] 插件
 - 此插件不支持Vue3，所以最好使用Vue2的版本进行开发。(可在 manifest.json 的基础配置中进行修改)
 
@@ -82,7 +83,7 @@ var configModule = uni.requireNativePlugin("PLV-VodUniPlugin-ConfigModule")
 ConfigModule 封装了账号信息、用户信息配置功能。
 开发者要播放保利威视频，需先到 [保利威官网](https://www.polyv.net/?f=dcloud_uniapp-211019) 注册账号，登录账号后，进入**云点播 - 设置 - API接口** 获取 `userid`、 `writetoken`、 `readtoken`、 `secretkey`，并将加密得到加密串放到自己的服务器，再在移动端通过网络获取加密串，app 本地解密，并设置给 `setToken` 方法。
 
-### setConfig
+### setConfig【设置账号方式一】
 
 加密串可在保利威官网的**云点播 - 设置 - API接口 - 点击查看临时加密串**获取，本方法使用固定的加密方式，开发者可在开发时使用，但安全性不如 setToken 方式，不推荐使用在正式环境。
 
@@ -118,7 +119,7 @@ ConfigModule 封装了账号信息、用户信息配置功能。
 
 
 
-### setToken
+### setToken【设置账号方式二】
 
  `userid`、 `writetoken`、 `readtoken`、 `secretkey`可在保利威官网的**云点播 - 设置 - API接口**获取，推荐用于正式环境。
 
@@ -156,6 +157,73 @@ ConfigModule 封装了账号信息、用户信息配置功能。
 - 类型：字符串
 - 描述：错误信息
 
+
+
+### setSubAccountConfig【设置账号方式三】
+
+ `appId`、 `secretKey`、 `userId`可在保利威官网的**云点播 - 设置 - API接口**获取，推荐用于正式环境。
+
+**params**
+
+`appId`
+
+- 类型：字符串
+- 描述：（必选项）保利威账号下的子帐号appId
+
+`secretKey`
+
+- 类型：字符串
+- 描述：（必选项）保利威账号下的 子帐号加密key
+
+`userId`
+
+- 类型：字符串
+- 描述：（必选项）保利威账号下的 总帐号userId
+
+**callback**
+
+`isSuccess`
+
+- 类型：布尔类型
+- 描述：是否设置成功
+
+`errMsg`
+
+- 类型：字符串
+- 描述：错误信息
+
+
+
+### setDownloadSetting
+
+设置下载配置（**请在设置账号信息前配置**）
+
+**params**
+
+`downloadPath`
+
+- 类型：字符串
+- 描述：下载路径iOS默认为 Documents/plvideo，Android默认为 polyvdownload
+
+
+
+### migrateLocalVideoPlaylist
+
+**由 2.18.x 及以下版本升级到 2.19.0 及以上版本时，需要注意视频下载的迁移**
+
+**自 2.19.0 版本开始，本地播放视频鉴权方式进行了调整，为了在覆盖升级时兼容已下载的旧版本视频，需要在视频播放前，手动调用迁移方法**
+
+**迁移视频前，请认真核对 secretKey，如果使用错误的 secretKey 迁移，迁移后的离线视频将无法播放。**
+
+**params**
+
+`secretKey`
+
+- 类型：字符串
+
+- 描述：（必选项）下载对应离线视频时使用的secretKey
+
+  
 
 
 ### setViewerId
@@ -209,7 +277,7 @@ ConfigModule 封装了账号信息、用户信息配置功能。
 
 ### openMediaCodec
 
-设置播放器为硬解解码播放，默认关闭。该解码模式设置后，会缓存该设置，直到清除数据卸载应用或者重新设置并重启应用后生效。**（Android v0.0.1+ 可用，iOS v0.0.6+ 可用）**
+设置播放器为硬解解码播放，默认关闭。该解码模式设置后，会缓存该设置，直到清除数据卸载应用或者重新设置并重启应用后生效。【视频播放前设置】**（Android v0.0.1+ 可用，iOS v0.0.6+ 可用）**
 
 **params**
 
@@ -645,7 +713,25 @@ downloadModule.setListenDownloadStatus(null)
 - 类型：数字类型
 - 描述：当前播放位置，单位秒，播放器就绪状态下每隔一秒回调一次
 
+### setCustomVideoToken
 
+设置自定义Token解密视频
+
+> 播放加密视频时，若设置此Token将优先使用此Token来解密视频
+
+**params**
+
+`token`
+
+- 类型：String
+- 描述：自定义Token字符串
+
+**callback**
+
+`errMsg`
+
+- 类型：字符串
+- 描述：错误信息
 
 ### setVid
 
@@ -675,8 +761,6 @@ downloadModule.setListenDownloadStatus(null)
 - 类型：字符串
 - 描述：错误信息
 
-
-
 ### setURL
 
 设置播放视频的 URL。
@@ -700,7 +784,16 @@ downloadModule.setListenDownloadStatus(null)
 - 类型：字符串
 - 描述：错误信息
 
+### setMediaHardDecode
 
+切换当前视频的解码方式【视频播放中可切换】
+
+**params**
+
+`mediaCodec`
+
+- 类型：Bool
+- 描述：是否是硬解（YES 硬解码，NO软解码）
 
 ### start
 
@@ -945,7 +1038,16 @@ downloadModule.setListenDownloadStatus(null)
 - 类型：数字类型
 - 描述：视频当前播放位置，单位秒
 
+### getMediaHardDecode
 
+获取当前视频的解码方式
+
+**callback**
+
+`mediaCodec`
+
+- 类型：bool
+- 描述：是否是硬解码(YES 硬解码，NO 软解码)
 
 ### snapshot
 
@@ -976,3 +1078,41 @@ downloadModule.setListenDownloadStatus(null)
 - 类型：布尔类型
 - 描述： （必选项）是否开启防录屏功能，true 开启，false 关闭，默认 false
 
+
+
+### setScalingMode
+
+设置视频拉伸模式
+
+**params**
+
+`scalingMode`
+
+- 类型：数字类型
+- 描述：（可选项）拉伸模式， 取值范围 0-居中，1-适应， 2-填充， 3-拉伸(默认为1-适应)
+
+
+
+### getScalingMode
+
+获取当前视频拉伸模式
+
+**callback**
+
+`scalingMode`
+
+- 类型：数字类型
+- 描述： 拉伸模式，0-居中，1-适应， 2-填充， 3-拉伸
+
+
+
+### enableBackgroundPlayback
+
+设置是否开启后台继续播放功能(**仅对iOS有效**)
+
+**params**
+
+`enable`
+
+- 类型：布尔类型
+- 描述：（可选项）是否开启（iOS默认关闭）

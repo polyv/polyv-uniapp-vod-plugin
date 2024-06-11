@@ -1,7 +1,7 @@
 {
 	"name": "Polyv云点播插件",
 	"id": "PLV-VodUniPlugin",
-	"version": "0.2.0",
+	"version": "1.0.0",
 	"description": "该插件封装了保利威原生点播 SDK，能实现保利威视频播放、下载等功能。",
 	"_dp_type": "nativeplugin",
 	"_dp_nativeplugin": {
@@ -30,27 +30,22 @@
 			],
 			"hooksClass": "PLVVodPluginProxy",
 			"frameworks": [
-				"PLVIJKPlayer.framework",
 				"libresolv.tbd",
-				"sqliterk.framework",
-				"WCDB.framework",
-				"sqlcipher.framework"
+				"PLVMarquee.framework",
+				"PLVFDB.framework"
 			],
 			"embedFrameworks": [
-				"PLVIJKPlayer.framework",
-				"sqliterk.framework",
-				"WCDB.framework",
-				"sqlcipher.framework"
+				"PLVMarquee.framework",
+				"PLVFDB.framework"
 			],
 			"integrateType": "framework",
 			"privacies": [
 				"NSPhotoLibraryUsageDescription",
 				"NSPhotoLibraryAddUsageDescription"
 			],
-			"deploymentTarget": "9.0",
+			"deploymentTarget": "11.0",
 			"validArchitectures": [
-				"arm64",
-				"armv7"
+				"arm64"
 			]
 		},
 		"android": {
@@ -96,6 +91,10 @@
 				{
 					"id": "com.google.code.gson:gson",
 					"source": "implementation('com.google.code.gson:gson:2.8.5')"
+				},
+				{
+					"id": "com.squareup.okhttp3:okhttp",
+					"source": "implementation('com.squareup.okhttp3:okhttp:4.5.0')"
 				}
 			]
 		}

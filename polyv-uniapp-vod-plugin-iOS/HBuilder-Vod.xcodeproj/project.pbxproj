@@ -50,6 +50,8 @@
 		360DC21D2644E40500951296 /* weex-polyfill.js in Resources */ = {isa = PBXBuildFile; fileRef = 360DC2002644E40400951296 /* weex-polyfill.js */; };
 		360DC21E2644E40500951296 /* weexUniJs.js in Resources */ = {isa = PBXBuildFile; fileRef = 360DC2012644E40400951296 /* weexUniJs.js */; };
 		362D0534264E0ED700244C76 /* liblibLog.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 24AFD8161CB50C4000C0F062 /* liblibLog.a */; };
+		369488B82C17EBFE007147EE /* PLVMarquee.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 369488B62C17EBD0007147EE /* PLVMarquee.framework */; };
+		369488B92C17EBFE007147EE /* PLVMarquee.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 369488B62C17EBD0007147EE /* PLVMarquee.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		36CB7C3C282E4B1700EFF9D9 /* PLVVodUniPlugin.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 36CB7C3B282E4B1700EFF9D9 /* PLVVodUniPlugin.framework */; };
 		67065F3A2243868400DC71CA /* Default-896h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 67065F1E2243868300DC71CA /* Default-896h@2x.png */; };
 		67065F3B2243868400DC71CA /* Default-Landscape-812h@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 67065F1F2243868300DC71CA /* Default-Landscape-812h@3x.png */; };
@@ -102,6 +104,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				369488B92C17EBFE007147EE /* PLVMarquee.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -818,6 +821,7 @@
 		360DC4E926451CBA00951296 /* mz_strm_os.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mz_strm_os.h; sourceTree = "<group>"; };
 		360DC4EA26451CBA00951296 /* SSZipArchive.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SSZipArchive.h; sourceTree = "<group>"; };
 		360DC4EB26451CBA00951296 /* SSZipCommon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SSZipCommon.h; sourceTree = "<group>"; };
+		369488B62C17EBD0007147EE /* PLVMarquee.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = PLVMarquee.framework; path = "PLV-VodUniPlugin/ios/PLVMarquee.framework"; sourceTree = "<group>"; };
 		36CB7C3B282E4B1700EFF9D9 /* PLVVodUniPlugin.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = PLVVodUniPlugin.framework; path = "PLV-VodUniPlugin/ios/PLVVodUniPlugin.framework"; sourceTree = "<group>"; };
 		6211582F4E40E111C17CF43D /* Pods-HBuilder-Vod.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-HBuilder-Vod.debug.xcconfig"; path = "Target Support Files/Pods-HBuilder-Vod/Pods-HBuilder-Vod.debug.xcconfig"; sourceTree = "<group>"; };
 		67065F1E2243868300DC71CA /* Default-896h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-896h@2x.png"; sourceTree = "<group>"; };
@@ -932,6 +936,7 @@
 				362D0534264E0ED700244C76 /* liblibLog.a in Frameworks */,
 				36CB7C3C282E4B1700EFF9D9 /* PLVVodUniPlugin.framework in Frameworks */,
 				005204B124F640890023AE9C /* liblibNativeUI.a in Frameworks */,
+				369488B82C17EBFE007147EE /* PLVMarquee.framework in Frameworks */,
 				005204B524F640890023AE9C /* liblibUI.a in Frameworks */,
 				005204B724F640890023AE9C /* libcoreSupport.a in Frameworks */,
 				005204B824F640890023AE9C /* libSDWebImage.a in Frameworks */,
@@ -1959,6 +1964,7 @@
 		8EED629A198A1D13000A4449 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				369488B62C17EBD0007147EE /* PLVMarquee.framework */,
 				36CB7C3B282E4B1700EFF9D9 /* PLVVodUniPlugin.framework */,
 				0052048B24F640860023AE9C /* libalixpayment.a */,
 				005204A624F640890023AE9C /* libAMapImp.a */,
@@ -2303,6 +2309,7 @@
 				ORGANIZATIONNAME = DCloud;
 				TargetAttributes = {
 					8EED6297198A1D13000A4449 = {
+						DevelopmentTeam = ETRBR9HA5V;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -2429,23 +2436,17 @@
 			);
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-HBuilder-Vod/Pods-HBuilder-Vod-frameworks.sh",
+				"${BUILT_PRODUCTS_DIR}/PLVFDB/PLVFDB.framework",
 				"${PODS_ROOT}/PLVIJKPlayer/PLVIJKPlayer.framework",
-				"${BUILT_PRODUCTS_DIR}/PLVMarquee/PLVMarquee.framework",
 				"${BUILT_PRODUCTS_DIR}/PLVTimer/PLVTimer.framework",
-				"${BUILT_PRODUCTS_DIR}/SQLiteRepairKit/sqliterk.framework",
 				"${BUILT_PRODUCTS_DIR}/SSZipArchive/SSZipArchive.framework",
-				"${BUILT_PRODUCTS_DIR}/WCDB/WCDB.framework",
-				"${BUILT_PRODUCTS_DIR}/WCDBOptimizedSQLCipher/sqlcipher.framework",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/PLVFDB.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/PLVIJKPlayer.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/PLVMarquee.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/PLVTimer.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/sqliterk.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/SSZipArchive.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/WCDB.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/sqlcipher.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -2565,7 +2566,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = ETRBR9HA5V;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -2598,7 +2599,6 @@
 					"$(inherited)",
 					"-ObjC",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "";
 				PRODUCT_NAME = VodPluginDemo;
 				PROVISIONING_PROFILE = "";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -2619,7 +2619,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = ETRBR9HA5V;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -2653,7 +2653,6 @@
 					"$(inherited)",
 					"-ObjC",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "";
 				PRODUCT_NAME = VodPluginDemo;
 				PROVISIONING_PROFILE = "";
 				PROVISIONING_PROFILE_SPECIFIER = "";

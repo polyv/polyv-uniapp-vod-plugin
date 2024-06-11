@@ -1,5 +1,48 @@
 # Framework 版本记录
 
+## [1.0.0]-- PolyvVodSDK 2.22.0
+
+```
+PLVVodUniPlugin  
+对应的 sdk: 
+PolyvVodSDK 2.22.0
+```
+
+## [0.2.4]-- PolyvVodSDK 2.18.3
+
+```
+PLVVodUniPlugin  
+对应的 sdk: 
+PolyvVodSDK 2.18.3
+```
+
+## [0.2.3]-- PolyvVodSDK 2.18.2-abn
+
+```
+PLVVodUniPlugin  
+对应的 sdk: 
+PolyvVodSDK 2.18.2-abn
+```
+
+## [0.2.2]-- PolyvVodSDK 2.18.0
+
+```
+PLVVodUniPlugin  
+对应的 sdk: 
+PolyvVodSDK 2.18.0
+```
+
+## [0.2.1]-- PolyvVodSDK 2.17.0
+
+```
+PLVVodUniPlugin  
+对应的 sdk: 
+PolyvVodSDK 2.17.0
+
+PLVIJKPlayer v0.11.3(dynamically)
+包含：PLVIJKPlayer.framework
+```
+
 ## [0.2.0]-- PolyvVodSDK 2.16.6
 
 ```

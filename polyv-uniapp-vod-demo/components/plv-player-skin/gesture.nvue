@@ -2,6 +2,8 @@
 	<view class="plv-player-gesture"
 		@touchstart="touchstart"
 		@touchmove="touchmove"
+		@longpress="handleLongPress"
+		@touchcancel="handleTouchCancel"
 		@touchend="touchend">
 	</view>
 </template>
@@ -45,7 +47,8 @@
 					const { holeWidth, duration, currentTime } = this;
 					const precent = Math.abs(position) / holeWidth;
 					const nowTime = currentTime || 0;
-					let plusTime = parseInt(Math.abs(precent * duration));
+					const constSecond = duration < 60 ? duration : 60;
+					let plusTime = parseInt(Math.abs(precent * constSecond));
 					if (position < 0) plusTime = plusTime * -1;
 					finalTime = nowTime + plusTime;
 					finalTime = this.limit(finalTime, 0, duration);
@@ -107,6 +110,9 @@
 						// doubleTap
 						case 4:
 							// console.log('>>>> 双击');
+							this.$emit('onGestureEvent', {
+								type: 'DOUBLE_CLICK'
+							});
 						  break;
 						// tap
 						case 5:
@@ -124,6 +130,7 @@
 				const { options } = this;
 				let startX, startY, moveEndX, moveEndY, X, Y, position, hasType;
 				let T, lastTap, isJustTouch = true;
+				
 			
 				const excuteCb = (type) => {
 					// type 手势类型 -2 上滑 -1 下滑 0 左滑  1 右滑  2 just touch 3 touchend 4 doubleTap 5 tap 6 longTap
@@ -178,6 +185,7 @@
 							hasType = '';
 							isJustTouch = true;
 							this.downLeft = startX < this.halfWidth ? true : false;
+							
 							break;
 						case 'move':
 							moveEndX = e.changedTouches[0].pageX;
@@ -218,6 +226,15 @@
 			
 			touchend(e) {
 				this.handleTouch('end', e);
+				this.$emit('onTouchEnd');
+			},
+			
+			handleTouchCancel() {
+				this.$emit('onTouchCancel');
+			},
+			
+			handleLongPress() {
+				this.$emit('onLongPress');
 			},
 			
 			/**

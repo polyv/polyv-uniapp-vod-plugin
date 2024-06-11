@@ -4,7 +4,7 @@
 			<plv-player
 				ref="vod"
 				class="vod-player"
-				seekType=0
+				seekType=1
 				autoPlay=true
 				disableScreenCAP=false
 				rememberLastPosition=false
@@ -21,6 +21,7 @@
 				@onHdBtnClick="onHdBtnClick"
 				@onRateBtnClick="onRateBtnClick"
 				@onVolumeChanged="onVolumeChanged"
+				@onScalingBtnClick="onScalingBtnClick"
 				@onScreenShot="onScreenShot">
 			</skin>
 		</view>
@@ -35,7 +36,7 @@
 <script>
 	import Head from '../../components/page-head.nvue';
 	import Skin from '../../components/plv-player-skin/skin.nvue';
-	
+	import DragTips from '@/components/plv-player-skin/drag-tips.nvue';	
 	const dom = weex.requireModule('dom');
 	
 	export default {
@@ -61,7 +62,7 @@
 				isFull: false,
 				// 默认音量
 				defaultVolume: 0.5,
-				videoVid: 'e97dbe3e6492b053bc9b5afc677a1394_e'
+				videoVid: ''
 			};
 		},
 
@@ -115,6 +116,7 @@
 				} else if (preparedToPlay != null) {
 					this.updateDuration();
 					this.updateLevels();
+					this.updateScaling();
 				}
 			},
 			
@@ -138,6 +140,15 @@
 					this.skin.updateCurrentLevel(ret.currentLevel);
 				});
 			},
+			
+			updateScaling() {
+				const { vodPlayer } = this;
+				if (!vodPlayer) return;
+				
+				vodPlayer.getScalingMode({}, ret => {
+					this.skin.updateScaling(ret.scalingMode);
+				});
+			},
 
 			onPlayBtnClick(isPlaying) {
 				const { vodPlayer } = this;
@@ -155,6 +166,12 @@
 				const { vodPlayer } = this;
 				if (!vodPlayer) return;
 				vodPlayer.setSpeed({speed});
+			},
+			
+			onScalingBtnClick(scalingMode) {
+				const { vodPlayer } = this;
+				if (!vodPlayer) return;
+				vodPlayer.setScalingMode({scalingMode});
 			},
 			
 			onFullBtnClick(isFull) {

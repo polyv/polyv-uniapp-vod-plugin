@@ -22,14 +22,7 @@
 		data() {
 			return {
 				videoList: [{
-						vid: 'e97dbe3e6492b053bc9b5afc677a1394_e',
-						level: 1
-					}, {
-						vid: 'e97dbe3e648de6e0a40f358c342f7306_e',
-						level: 1
-					},
-					{
-						vid: 'e97dbe3e64c247499b55f213a4470052_e',
+						vid: '',
 						level: 1
 					}
 				],
@@ -38,7 +31,7 @@
 		onLoad() {
 			// 设置加密串。正式项目不建议直接明文设置
 			configModule.setConfig({
-					'config': "yQRmgnzPyCUYDx6weXRATIN8gkp7BYGAl3ATjE/jHZunrULx8CoKa1WGMjfHftVChhIQlCA9bFeDDX+ThiuBHLjsNRjotqxhiz97ZjYaCQH/MhUrbEURv58317PwPuGEf3rbLVPOa4c9jliBcO+22A==", //加密串配置
+					'config': "", //加密串配置
 				},
 				(ret) => {
 					if (ret.isSuccess == true) {
@@ -83,7 +76,12 @@
 							downloadArr: [this.videoList[index]]
 						};
 						downloadModule.addDownloader(downloadParam, result => {
-							console.log(result);
+							console.log("addDownloader"+JSON.stringify(result));
+                        })
+                        uni.showToast({
+							title: '视频添加成功',
+							icon: "none",
+							mask: true
 						})
 					}
 				}

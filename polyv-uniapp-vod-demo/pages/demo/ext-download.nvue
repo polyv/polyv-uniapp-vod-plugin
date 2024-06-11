@@ -20,8 +20,7 @@
 			</view>
 		</view>
 		<view class="fix-bottom">
-			<text class="fix-bottom-item" style="border-left-width: none;" @click="downloadAll">全部开始</text>
-			<text class="fix-bottom-item" @click="stopAll">全部暂停</text>
+			<text class="fix-bottom-item" @click="downloadAction">{{isDownloading?"全部暂停":"全部开始"}}</text>
 			<text class="fix-bottom-item" @click="clearDownload">清空下载</text>
 		</view>
 	</div>
@@ -37,6 +36,7 @@
 			return {
 				downloadList: [],
 				progressVid: {},
+				isDownloading: false,
 			};
 		},
 		onLoad() {
@@ -120,11 +120,19 @@
 					url: '/pages/demo/ext-ply-player?id=' + vid
 				});
 			},
+			downloadAction() {
+				if(this.isDownloading) {
+					this.stopAll();
+				} else {
+					this.downloadAll();
+				}
+				this.isDownloading = !this.isDownloading;
+			},
 			downloadAll() {
 				downloadModule.startAllDownloader();
 				uni.showToast({
 					title: 'start download all video',
-					icon: "none"
+					icon: "none",
 				})
 			},
 			stopAll() {

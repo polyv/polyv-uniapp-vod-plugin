@@ -15,6 +15,18 @@ function formatTime(time) {
 	}).join(':')
 }
 
+	
+function formatTimeByDuration(result, timeShowBlock = 1) {
+	let h = Math.floor(result / 3600) < 10 ? '0' + Math.floor(result / 3600) : Math.floor(result / 3600);
+	let m = Math.floor((result / 60 % 60)) < 10 ? '0' + Math.floor((result / 60 % 60)) : Math.floor((result / 60 % 60));
+	let s = Math.floor((result % 60)) < 10 ? '0' + Math.floor((result % 60)) : Math.floor((result % 60));
+	
+	if (timeShowBlock === 2)
+		return result = h + ':' + m + ':' + s;
+	else
+		return result = m + ':' + s;
+}
+
 function formatLocation(longitude, latitude) {
 	if (typeof longitude === 'string' && typeof latitude === 'string') {
 		longitude = parseFloat(longitude)
@@ -66,8 +78,31 @@ var dateUtils = {
 	}
 };
 
+function debounce(func, wait, immediate) {
+    let timeout, result;
+
+    return function() {
+      let context = this;
+      let args = arguments;
+      if (timeout) clearTimeout(timeout);
+
+      let later = function() {
+        timeout = null;
+        if (!immediate) result = func.apply(context, args);
+      };
+
+      let callNow = immediate && !timeout;
+      timeout = setTimeout(later, wait);
+      if (callNow) result = func.apply(this, args);
+
+      return result;
+    };
+  }
+
 module.exports = {
 	formatTime: formatTime,
 	formatLocation: formatLocation,
-	dateUtils: dateUtils
+	dateUtils: dateUtils,
+	debounce: debounce,
+	formatTimeByDuration: formatTimeByDuration
 }

@@ -5,9 +5,10 @@
 		<view>
 			<input class="uni-input" style="min-height: 35px; height: 35px; border: 1px solid #cccccc;font-size: 14px;" :value="inputSign"
 			 @input="onSignInput" placeholder="请输入加密串" maxlength="-1" />
-			<button class="cell-button" type="primary" @click="configString">设置加密串</button>
+			<button class="cell-button" type="primary" @click="configString">账号设置方式一 设置加密串</button>
 		</view>
-		<button class="cell-button" type="primary" @click="configToken">设置token</button>
+		<button class="cell-button" type="primary" @click="configToken">账号设置方式二 设置token</button>
+		<button class="cell-button" type="primary" @click="configSubAccount">账号设置方式三 设置子账号</button>
 		<button class="cell-button" type="primary" @click="setViewer">设置统计参数</button>
 		<!-- 视频解码器解码类型- 0.0.6起iOS同步支持 -->
 		<button class="cell-button" type="primary" @click="openMediaCodec">打开硬解开关</button>
@@ -66,18 +67,11 @@
 				downloadlist: "{}",
 				downloadProgress: "",
 				title: '设置加密串',
-				videoVid: "", //e97dbe3e64c247499b55f213a4470052_e
-				inputSign: "yQRmgnzPyCUYDx6weXRATIN8gkp7BYGAl3ATjE/jHZunrULx8CoKa1WGMjfHftVChhIQlCA9bFeDDX+ThiuBHLjsNRjotqxhiz97ZjYaCQH/MhUrbEURv58317PwPuGEf3rbLVPOa4c9jliBcO+22A==", //加密串配置
+				videoVid: "", //
+				inputSign: "", //加密串配置
 				//批量下载的视频
 				downloadVideos: [{
-						vid: 'e97dbe3e6492b053bc9b5afc677a1394_e',
-						level: 1
-					}, {
-						vid: 'e97dbe3e648de6e0a40f358c342f7306_e',
-						level: 1
-					},
-					{
-						vid: 'e97dbe3e64c247499b55f213a4470052_e',
+						vid: '',
 						level: 1
 					}
 				]
@@ -130,6 +124,27 @@
 							let errMsg = ret.errMsg;
 							uni.showToast({
 								title: '设置token失败：' + errMsg,
+								icon: "none"
+							})
+						}
+					})
+			},
+			configSubAccount() {
+				configModule.setSubAccountConfig({
+						'appId': '',
+						'secretKey': '',
+						'userId': '',
+					},
+					(ret) => {
+						if (ret.isSuccess == true) {
+							uni.showToast({
+								title: '子账号设置成功',
+								icon: "none"
+							})
+						} else {
+							let errMsg = ret.errMsg;
+							uni.showToast({
+								title: '子账号设置失败：' + errMsg,
 								icon: "none"
 							})
 						}
