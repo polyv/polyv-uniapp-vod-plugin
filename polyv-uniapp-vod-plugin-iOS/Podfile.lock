@@ -9,22 +9,22 @@ PODS:
   - PLVFDB (1.0.5)
   - PLVIJKPlayer (0.13.4)
   - PLVTimer (0.0.4)
-  - PolyvVodSDK (2.22.0):
-    - PolyvVodSDK/Core (= 2.22.0)
-    - PolyvVodSDK/Player (= 2.22.0)
-    - PolyvVodSDK/ThirdPart (= 2.22.0)
-  - PolyvVodSDK/Core (2.22.0):
+  - PolyvVodSDK (2.22.3):
+    - PolyvVodSDK/Core (= 2.22.3)
+    - PolyvVodSDK/Player (= 2.22.3)
+    - PolyvVodSDK/ThirdPart (= 2.22.3)
+  - PolyvVodSDK/Core (2.22.3):
     - PLVTimer (~> 0.0.2)
-  - PolyvVodSDK/Player (2.22.0):
+  - PolyvVodSDK/Player (2.22.3):
     - PLVIJKPlayer (~> 0.13.4)
-  - PolyvVodSDK/ThirdPart (2.22.0):
+  - PolyvVodSDK/ThirdPart (2.22.3):
     - PLVAliHttpDNS (~> 1.10.0)
     - PLVFDB (= 1.0.5)
     - SSZipArchive (~> 2.1.5)
   - SSZipArchive (2.1.5)
 
 DEPENDENCIES:
-  - PolyvVodSDK (~> 2.22.0)
+  - PolyvVodSDK (~> 2.22.3)
 
 SPEC REPOS:
   trunk:
@@ -40,9 +40,9 @@ SPEC CHECKSUMS:
   PLVFDB: d3dd7f38f9a80e7db05737c18f56f6fb2013e6f3
   PLVIJKPlayer: e9dd51f8bb6172bee912854e1fc069fa5914c081
   PLVTimer: 80d2d24d32bb2e9588d089fc25974ff778259ae1
-  PolyvVodSDK: b6c76aebb96602fc59048ee947c38630430dc41e
+  PolyvVodSDK: 2d0b4ebf9bf3a95e5098afaf564baf2290b66e62
   SSZipArchive: cefe1364104a0231268a5deb8495bdf2861f52f0
 
-PODFILE CHECKSUM: 602a7105fcecc5173267ee353e62234ce98c0a7f
+PODFILE CHECKSUM: 381b87aa754232309c31af336a40125d33b84fd9
 
 COCOAPODS: 1.11.3

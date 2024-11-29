@@ -1,5 +1,13 @@
 # Framework 版本记录
 
+## [1.0.2]-- PolyvVodSDK 2.22.3
+
+```
+PLVVodUniPlugin  
+对应的 sdk: 
+PolyvVodSDK 2.22.3
+```
+
 ## [1.0.0]-- PolyvVodSDK 2.22.0
 
 ```
