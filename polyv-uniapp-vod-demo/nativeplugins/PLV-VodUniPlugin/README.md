@@ -1116,3 +1116,171 @@ downloadModule.setListenDownloadStatus(null)
 
 - 类型：布尔类型
 - 描述：（可选项）是否开启（iOS默认关闭）
+
+### getWatchTimeDuration
+
+获取观看时长
+
+**callback**
+
+`watchTime`
+
+- 类型：数字类型
+- 描述：获取视频观看时长，单位秒
+
+### getVideoContentPlayedTime
+
+获取视频内容的观看时长, 例如n倍速从0秒播放到10秒，都会返回10
+
+**callback**
+
+`contentPlayedTime`
+
+- 类型：数字类型
+- 描述：获取视频内容观看时长，单位秒
+
+### getStayTimeDuration
+
+获取停留时长 返回秒
+
+**callback**
+
+`stayTime`
+
+- 类型：数字类型
+- 描述：获取停留时长，单位秒
+
+### enableSeekCompleteListener
+
+开启seek监听回调
+
+**params**
+
+`enable`
+
+- 类型：布尔类型
+- 描述：是否开启 (默认关闭)
+
+### enableHttpDns
+
+是否开启HttpDns开关
+
+**params**
+
+`enableHttpDns`
+
+- 类型：布尔类型
+- 描述：是否开启 (Android默认关闭)
+
+### onSeekComplete
+
+seek成功后的回调
+
+`onSeek`
+
+- 类型：布尔类型
+- 描述：当开启了Seek监听后，每次seek都会进行一次回调
+
+### changeSRTSingleMode
+
+更换字幕模式
+
+**params**
+
+`isSingle`
+
+- 类型：布尔类型
+- 描述：是否使用单字幕模式，true为使用单字幕，false不使用单字幕
+
+### changeSRT
+
+更换使用其他字幕
+
+**params**
+
+`srtTitle`
+
+- 类型：string类型
+- 描述：选择使用那一份字幕，传入对应的字幕，如果没有的话不显示字幕
+
+### setOpenSRT
+
+**params**
+
+`openSrt`
+
+- 类型：布尔类型
+- 描述：选择是否开启字幕功能
+
+### onEnableSubtitle
+
+`isEnableSubtitle`
+
+- 类型：布尔类型
+- 描述：是否可以使用字幕功能
+
+`isEnableDoubleSubtitle`
+
+- 类型：布尔类型
+- 描述：是否可以使用双字幕功能
+
+### onSRTTextConfig
+
+``` json
+detail: {
+	fontSize: 16
+	position: "bottom"
+	fontColor:"#FFFFFFFF" (argb格式/或是rgb格式)
+	fontBold: true
+	fontItalics: true
+	backgroundColor: "#00000000"
+}
+```
+
+`fontSize`
+
+- 类型：数字类型
+- 描述：是否可以使用双字幕功能
+
+`position`
+
+- 类型：string类型
+- 描述：position为 “bottom” 表示双字幕中底部字幕配置
+- position为 “top” 表示双字幕中顶部字幕配置
+- position为 “”或空时 表示单字幕配置
+
+### sendSRTTitle
+
+获取当前视频支持的字幕列表
+
+```json
+{
+	"srtlist": [{
+		"titles": "ENG123"
+	}, {
+		"titles": "中文123"
+	}, {
+		"titles": "第三份"
+	}]
+}
+```
+
+### onSRTString
+
+获取当前时刻显示的字幕(每秒都会返回字幕出来)
+
+```json
+{
+	"strList": [{
+		"position": "topSubtitles",
+		"srtText": "字幕测试222222222"
+	}, {
+		"position": "bottomSubtitles",
+		"srtText": "srtTest222222222"
+	}]
+}
+```
+
+- 描述： 字幕的position为 "topSubtitles" 表示当前双字幕中顶部字幕的显示
+- 字幕的position为 "bottomSubtitles" 表示当前双字幕中底部字幕的显示
+- 字幕的position为 "singleSubtitles" 表示当前是单字幕的显示
